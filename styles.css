@@ -1,52 +1,72 @@
-/* Instrument Layout */
-.instrument-wrap {
+:root {
+    --victory-gold: #d4af37;
+    --led-on: #ffcc00;
+}
+
+body {
+    background-color: #121212;
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: center;
+    padding-top: 50px;
+    margin: 0;
+    font-family: sans-serif;
 }
 
 .chassis {
     width: 900px;
-    background: linear-gradient(to bottom, #222, #333, #222);
-    border-radius: 10px 10px 0 0;
-    padding: 30px;
-    box-shadow: 0 30px 60px rgba(0,0,0,0.9);
+    background: #2a2a2a;
+    border: 2px solid #111;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    color: var(--victory-gold);
+    font-weight: bold;
+    letter-spacing: 2px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+    margin-bottom: 30px;
 }
 
 .controls-row {
     display: flex;
-    justify-content: space-evenly;
+    justify-content: space-around;
     margin-bottom: 40px;
 }
 
-/* The Keybed Styles */
+.knob {
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(circle, #444, #111);
+    border: 2px solid #000;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.gold-led {
+    width: 12px;
+    height: 12px;
+    background: #332200;
+    border-radius: 50%;
+    margin: 20px auto 10px;
+}
+
+.gold-led.active { background: var(--led-on); box-shadow: 0 0 10px var(--led-on); }
+
+label { color: #888; font-size: 10px; text-align: center; display: block; }
+
+/* The Keybed */
 .keybed {
     display: flex;
+    justify-content: center;
     background: #000;
     padding: 10px;
-    border-radius: 0 0 5px 5px;
-    border-top: 8px solid #1a1a1a; /* The "Gap" above keys */
+    border-radius: 5px;
 }
 
-.white-key {
-    width: 40px;
-    height: 180px;
-    background: linear-gradient(to bottom, #eee 0%, #fff 100%);
-    border: 1px solid #ccc;
-    border-radius: 0 0 4px 4px;
-    position: relative;
-    z-index: 1;
-}
-
-.black-key {
-    width: 26px;
-    height: 110px;
-    background: linear-gradient(to bottom, #111 0%, #333 100%);
-    margin-left: -13px;
-    margin-right: -13px;
-    z-index: 2;
-    border-radius: 0 0 3px 3px;
-}
-
-.white-key:active, .white-key.active { background: #ddd; }
-.black-key:active, .black-key.active { background: #000; }
+.white-key { width: 35px; height: 150px; background: #fff; border: 1px solid #ccc; border-radius: 0 0 3px 3px; }
+.black-key { width: 22px; height: 90px; background: #000; margin: 0 -11px; z-index: 2; border-radius: 0 0 2px 2px; }
