@@ -225,6 +225,138 @@
             stroke: var(--led-red);
         }
 
+        /* ───── MIDI BAR ───── */
+        .midi-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(180deg, #0a0807 0%, #060403 100%);
+            border: 1px solid #000;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 1;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.7);
+            flex-wrap: wrap;
+        }
+
+        .midi-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+        }
+
+        .midi-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #3a3027;
+            border: 1px solid #000;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+
+        .midi-dot.connected {
+            background: var(--led-on);
+            box-shadow: 0 0 8px var(--led-on);
+        }
+
+        .midi-dot.error {
+            background: var(--led-red);
+            box-shadow: 0 0 8px var(--led-red);
+        }
+
+        .midi-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .midi-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-bright);
+            background: linear-gradient(180deg, #2a2420 0%, #15110e 100%);
+            border: 1px solid #000;
+            border-radius: 5px;
+            padding: 7px 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow:
+                0 2px 4px rgba(0,0,0,0.5),
+                inset 0 1px 0 rgba(255,220,160,0.08);
+        }
+
+        .midi-btn:hover {
+            color: var(--victory-gold);
+            border-color: var(--victory-gold-dim);
+        }
+
+        .midi-btn:active {
+            transform: translateY(1px);
+        }
+
+        .midi-btn.learning {
+            color: #050302;
+            background: linear-gradient(180deg, var(--victory-gold-bright) 0%, var(--victory-gold) 100%);
+            border-color: var(--victory-gold);
+            box-shadow: 0 0 14px rgba(212,175,55,0.5);
+        }
+
+        /* Learn-mode highlight on mappable knobs */
+        .control-cell.learn-target {
+            cursor: crosshair;
+        }
+
+        .control-cell.learn-target .knob-wrap::after {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border: 1px dashed var(--victory-gold);
+            border-radius: 50%;
+            animation: learn-pulse 1.2s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .control-cell.learn-armed .knob-wrap::after {
+            border-style: solid;
+            border-width: 2px;
+            animation: none;
+            box-shadow: 0 0 14px rgba(212,175,55,0.6);
+        }
+
+        @keyframes learn-pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.04); }
+        }
+
+        /* "Mapped to CCxx" badge */
+        .cc-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 7px;
+            letter-spacing: 0.5px;
+            color: var(--victory-gold);
+            background: rgba(212,175,55,0.12);
+            border: 1px solid rgba(212,175,55,0.3);
+            border-radius: 3px;
+            padding: 1px 4px;
+            display: none;
+        }
+
+        .control-cell.has-cc .cc-badge {
+            display: block;
+        }
+
         .control-cell {
             background:
                 linear-gradient(180deg, var(--panel-edge) 0%, var(--panel) 100%);
@@ -698,6 +830,20 @@
             </div>
         </div>
 
+        <!-- ─── MIDI BAR ─── -->
+        <div class="midi-bar">
+            <div class="midi-status">
+                <span class="midi-dot" id="midi-dot"></span>
+                <span id="midi-status-text">MIDI: scanning&hellip;</span>
+            </div>
+            <div class="midi-actions">
+                <button class="midi-btn" id="learn-btn">MIDI Learn</button>
+                <button class="midi-btn" id="save-preset-btn">Save Preset</button>
+                <button class="midi-btn" id="load-preset-btn">Load Preset</button>
+                <input type="file" id="preset-file-input" accept=".json,application/json" style="display:none">
+            </div>
+        </div>
+
         <!-- ─── KEYBED ─── -->
         <div class="keybed-frame">
             <div class="keybed" id="keybed"></div>
@@ -721,7 +867,7 @@
         </div>
 
         <div class="footer-info">
-            <div>Play with <kbd>A S D F G H J K</kbd> · sharps <kbd>W E T Y U</kbd></div>
+            <div>MIDI controller or <kbd>A S D F G H J K</kbd> &middot; sharps <kbd>W E T Y U</kbd> &middot; right-click a knob to MIDI-map it</div>
             <div class="badge">Victory Musical Instruments</div>
         </div>
     </div>
@@ -1244,6 +1390,9 @@ window.addEventListener('keyup', (e) => {
 });
 
 // ─── KNOBS ─────────────────────────────────────────────────
+// Registry lets MIDI input and preset load/save drive every knob.
+const knobRegistry = {};   // param → { setNormalized, getNormalized, el, min, max, def }
+
 document.querySelectorAll('.control-cell[data-knob]').forEach(setupKnob);
 
 function setupKnob(el) {
@@ -1254,6 +1403,11 @@ function setupKnob(el) {
     const knob = el.querySelector('.knob');
     const valueDisplay = el.querySelector('.value-display');
     const arcValue = el.querySelector('.knob-arc .value');
+
+    // CC badge — shows which MIDI CC is mapped to this knob
+    const ccBadge = document.createElement('span');
+    ccBadge.className = 'cc-badge';
+    el.appendChild(ccBadge);
 
     let value = def;
     let dragging = false;
@@ -1280,7 +1434,6 @@ function setupKnob(el) {
             case 'speed':
                 return v.toFixed(1) + ' Hz';
             case 'master': {
-                // Show as dB. v² × 1.1 gain → dB
                 const gain = v * v * 1.1;
                 if (gain < 0.0001) return '-\u221E dB';
                 const db = 20 * Math.log10(gain);
@@ -1335,6 +1488,29 @@ function setupKnob(el) {
         setValue(touchStartVal + (dy / 150) * range);
     }, { passive: false });
     knob.addEventListener('touchend', () => { dragging = false; });
+
+    // Right-click to arm this knob for MIDI Learn
+    el.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        armKnobForLearn(param);
+    });
+
+    // Register so MIDI / presets can drive it
+    knobRegistry[param] = {
+        el,
+        min, max, def,
+        setNormalized(norm) { setValue(min + norm * (max - min)); },
+        getNormalized() { return (value - min) / (max - min); },
+        setCCBadge(cc) {
+            if (cc === null || cc === undefined) {
+                el.classList.remove('has-cc');
+                ccBadge.textContent = '';
+            } else {
+                el.classList.add('has-cc');
+                ccBadge.textContent = 'CC' + cc;
+            }
+        },
+    };
 
     setValue(def);
 }
@@ -1421,6 +1597,320 @@ function pulseLoop() {
     requestAnimationFrame(pulseLoop);
 }
 pulseLoop();
+
+// ════════════════════════════════════════════════════════════
+//  WEB MIDI — keyboard input, pitch bend, sustain pedal, CC learn
+// ════════════════════════════════════════════════════════════
+
+const midiDot = document.getElementById('midi-dot');
+const midiStatusText = document.getElementById('midi-status-text');
+const learnBtn = document.getElementById('learn-btn');
+
+// param ↔ CC mappings
+const ccMap = {};        // ccNumber → param
+const paramToCC = {};    // param → ccNumber
+
+// Learn state
+let learnMode = false;       // global LEARN button armed
+let armedParam = null;       // a specific knob waiting to bind (right-click or button+click)
+
+// Track MIDI-sounding notes so highlights/voices clean up correctly
+const midiNotesOn = new Map();   // midiNote → freq
+let midiPitchBend = 0;           // −2..+2 semitones (range ±2)
+
+// ─── Connect ───────────────────────────────────────────────
+if (navigator.requestMIDIAccess) {
+    navigator.requestMIDIAccess({ sysex: false })
+        .then(onMIDISuccess, onMIDIFailure);
+} else {
+    midiDot.classList.add('error');
+    midiStatusText.textContent = 'MIDI: not supported in this browser';
+}
+
+function onMIDISuccess(midiAccess) {
+    function refreshInputs() {
+        const inputs = Array.from(midiAccess.inputs.values());
+        inputs.forEach(input => { input.onmidimessage = handleMIDIMessage; });
+        if (inputs.length > 0) {
+            midiDot.classList.add('connected');
+            midiDot.classList.remove('error');
+            const names = inputs.map(i => i.name).join(', ');
+            const label = 'MIDI: ' + names;
+            midiStatusText.dataset.deviceName = label;
+            if (!learnMode && !armedParam) midiStatusText.textContent = label;
+        } else {
+            midiDot.classList.remove('connected', 'error');
+            midiStatusText.dataset.deviceName = '';
+            if (!learnMode && !armedParam) {
+                midiStatusText.textContent = 'MIDI: no device — connect a controller';
+            }
+        }
+    }
+    refreshInputs();
+    midiAccess.onstatechange = refreshInputs;
+}
+
+function onMIDIFailure() {
+    midiDot.classList.add('error');
+    midiStatusText.textContent = 'MIDI: access denied';
+}
+
+// ─── Message handling ──────────────────────────────────────
+function handleMIDIMessage(msg) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const [status, data1, data2] = msg.data;
+    const command = status & 0xf0;
+
+    switch (command) {
+        case 0x90: // Note On
+            if (data2 > 0) midiNoteOn(data1, data2);
+            else midiNoteOff(data1);          // velocity 0 = note off
+            break;
+        case 0x80: // Note Off
+            midiNoteOff(data1);
+            break;
+        case 0xB0: // Control Change
+            handleCC(data1, data2);
+            break;
+        case 0xE0: // Pitch Bend
+            handlePitchBend(data1, data2);
+            break;
+    }
+}
+
+// ─── MIDI notes — full range, on-screen keys light when in view ──
+function midiNoteOn(midiNote, velocity) {
+    const vel = velocity / 127;            // real velocity, 0..1
+    const freq = midiToFreq(midiNote) * Math.pow(2, midiPitchBend / 12);
+    midiNotesOn.set(midiNote, freq);
+    noteOn(freq, vel);
+    const el = keyEls.get(midiNote);       // visible range = MIDI 48..95
+    if (el) el.classList.add('active');
+}
+
+function midiNoteOff(midiNote) {
+    const freq = midiNotesOn.get(midiNote);
+    if (freq === undefined) return;
+    midiNotesOn.delete(midiNote);
+    noteOff(freq);
+    const el = keyEls.get(midiNote);
+    if (el) el.classList.remove('active');
+}
+
+// ─── Pitch bend — ±2 semitones, live on sounding MIDI notes ──
+function handlePitchBend(lsb, msb) {
+    const raw = (msb << 7) | lsb;           // 0..16383, center 8192
+    midiPitchBend = ((raw - 8192) / 8192) * 2;   // ±2 semitones
+    const ratio = Math.pow(2, midiPitchBend / 12);
+    // Retune currently sounding MIDI voices
+    midiNotesOn.forEach((oldFreq, midiNote) => {
+        const baseFreq = midiToFreq(midiNote);
+        const v = voices.get(oldFreq);
+        if (v) {
+            const now = audioCtx.currentTime;
+            v.tineCarrier.frequency.setTargetAtTime(baseFreq * ratio, now, 0.02);
+            v.bodyOsc.frequency.setTargetAtTime(baseFreq * ratio, now, 0.02);
+            v.tineMod.frequency.setTargetAtTime(baseFreq * 14 * ratio, now, 0.02);
+        }
+    });
+}
+
+// ─── Control Change — sustain pedal + knob mapping/learn ──
+function handleCC(cc, val) {
+    // Sustain pedal (CC 64) always works regardless of mapping
+    if (cc === 64) {
+        if (val >= 64) {
+            state.sustain = true;
+            document.getElementById('sustain-dot').classList.add('on');
+        } else {
+            state.sustain = false;
+            document.getElementById('sustain-dot').classList.remove('on');
+            sustained.forEach(freq => {
+                const v = voices.get(freq);
+                if (v) { releaseVoice(v); voices.delete(freq); }
+            });
+            sustained.clear();
+            updateVoiceDisplay();
+        }
+        return;
+    }
+
+    // Learn: if a knob is armed (right-click or LEARN+click), bind this CC to it
+    if (armedParam) {
+        bindCC(cc, armedParam);
+        disarmLearn();
+        return;
+    }
+    // Global LEARN mode with no specific knob armed: ignore until a knob is clicked
+    // (knob click while in learnMode arms it — see learn button handler)
+
+    // Normal operation: drive the mapped knob
+    const param = ccMap[cc];
+    if (param && knobRegistry[param]) {
+        knobRegistry[param].setNormalized(val / 127);
+    }
+}
+
+// ─── Binding / learn helpers ───────────────────────────────
+function bindCC(cc, param) {
+    // Remove any previous binding for this CC or this param
+    if (ccMap[cc] && ccMap[cc] !== param) {
+        const oldParam = ccMap[cc];
+        delete paramToCC[oldParam];
+        if (knobRegistry[oldParam]) knobRegistry[oldParam].setCCBadge(null);
+    }
+    if (paramToCC[param] !== undefined) {
+        delete ccMap[paramToCC[param]];
+    }
+    ccMap[cc] = param;
+    paramToCC[param] = cc;
+    if (knobRegistry[param]) knobRegistry[param].setCCBadge(cc);
+}
+
+function armKnobForLearn(param) {
+    // Clear any other armed knob
+    Object.values(knobRegistry).forEach(k => k.el.classList.remove('learn-armed'));
+    armedParam = param;
+    if (knobRegistry[param]) knobRegistry[param].el.classList.add('learn-armed');
+    midiStatusText.textContent = 'MIDI Learn: move a knob/fader to bind \u2192 ' + param.toUpperCase();
+}
+
+function disarmLearn() {
+    if (armedParam && knobRegistry[armedParam]) {
+        knobRegistry[armedParam].el.classList.remove('learn-armed');
+    }
+    armedParam = null;
+    if (learnMode) {
+        // stay in global learn mode, just cleared the armed knob
+        midiStatusText.textContent = 'MIDI Learn: click a knob, then move a control';
+    } else {
+        // restore device status text
+        const connected = midiDot.classList.contains('connected');
+        midiStatusText.textContent = connected
+            ? midiStatusText.dataset.deviceName || 'MIDI: connected'
+            : 'MIDI: no device — connect a controller';
+    }
+}
+
+// ─── LEARN button — global learn mode ──────────────────────
+learnBtn.addEventListener('click', () => {
+    learnMode = !learnMode;
+    learnBtn.classList.toggle('learning', learnMode);
+    if (learnMode) {
+        // Highlight all knobs as learn targets
+        Object.values(knobRegistry).forEach(k => k.el.classList.add('learn-target'));
+        midiStatusText.textContent = 'MIDI Learn: click a knob, then move a control';
+        // mousedown (capture phase) arms the knob and blocks the drag while learning
+        Object.entries(knobRegistry).forEach(([param, k]) => {
+            k._learnClickHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                armKnobForLearn(param);
+            };
+            k.el.addEventListener('mousedown', k._learnClickHandler, true);
+            k.el.addEventListener('touchstart', k._learnClickHandler, true);
+        });
+    } else {
+        exitLearnMode();
+    }
+});
+
+function exitLearnMode() {
+    learnMode = false;
+    learnBtn.classList.remove('learning');
+    Object.values(knobRegistry).forEach(k => {
+        k.el.classList.remove('learn-target', 'learn-armed');
+        if (k._learnClickHandler) {
+            k.el.removeEventListener('mousedown', k._learnClickHandler, true);
+            k.el.removeEventListener('touchstart', k._learnClickHandler, true);
+            k._learnClickHandler = null;
+        }
+    });
+    armedParam = null;
+    const connected = midiDot.classList.contains('connected');
+    midiStatusText.textContent = connected
+        ? (midiStatusText.dataset.deviceName || 'MIDI: connected')
+        : 'MIDI: no device — connect a controller';
+}
+
+// Esc exits learn mode
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && learnMode) exitLearnMode();
+});
+
+// ════════════════════════════════════════════════════════════
+//  PRESET SAVE / LOAD — exports knob values + MIDI mappings to JSON
+// ════════════════════════════════════════════════════════════
+
+const savePresetBtn = document.getElementById('save-preset-btn');
+const loadPresetBtn = document.getElementById('load-preset-btn');
+const presetFileInput = document.getElementById('preset-file-input');
+
+savePresetBtn.addEventListener('click', () => {
+    const preset = {
+        name: 'Bender Roads Preset',
+        version: 2,
+        savedAt: new Date().toISOString(),
+        knobs: {},        // param → normalized 0..1
+        midiMap: {},      // param → ccNumber
+    };
+    Object.entries(knobRegistry).forEach(([param, k]) => {
+        preset.knobs[param] = k.getNormalized();
+    });
+    Object.entries(paramToCC).forEach(([param, cc]) => {
+        preset.midiMap[param] = cc;
+    });
+
+    const blob = new Blob([JSON.stringify(preset, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bender-roads-preset.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+});
+
+loadPresetBtn.addEventListener('click', () => presetFileInput.click());
+
+presetFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            const preset = JSON.parse(ev.target.result);
+            applyPreset(preset);
+            midiStatusText.textContent = 'Preset loaded: ' + (preset.name || 'untitled');
+        } catch (err) {
+            midiStatusText.textContent = 'Preset load failed — invalid file';
+        }
+        presetFileInput.value = '';   // allow re-loading the same file
+    };
+    reader.readAsText(file);
+});
+
+function applyPreset(preset) {
+    // Knob values
+    if (preset.knobs) {
+        Object.entries(preset.knobs).forEach(([param, norm]) => {
+            if (knobRegistry[param]) knobRegistry[param].setNormalized(norm);
+        });
+    }
+    // Clear existing MIDI map
+    Object.keys(ccMap).forEach(cc => delete ccMap[cc]);
+    Object.keys(paramToCC).forEach(param => {
+        delete paramToCC[param];
+        if (knobRegistry[param]) knobRegistry[param].setCCBadge(null);
+    });
+    // Apply saved MIDI map
+    if (preset.midiMap) {
+        Object.entries(preset.midiMap).forEach(([param, cc]) => {
+            if (knobRegistry[param]) bindCC(cc, param);
+        });
+    }
+}
 
 // ─── RESUME AUDIO ──────────────────────────────────────────
 const resumeAudio = () => {
