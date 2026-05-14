@@ -322,7 +322,7 @@
             background: linear-gradient(180deg, #000 0%, #0a0807 100%);
             border: 1px solid #000;
             border-radius: 8px;
-            padding: 14px;
+            padding: 10px;
             box-shadow:
                 inset 0 3px 8px rgba(0,0,0,0.8);
             position: relative;
@@ -331,7 +331,7 @@
 
         .keybed {
             position: relative;
-            height: 200px;
+            height: 140px;
             background: #000;
             border-radius: 4px;
             user-select: none;
@@ -347,7 +347,7 @@
         }
 
         .white-key {
-            height: 200px;
+            height: 140px;
             background: linear-gradient(180deg, #f5f0e6 0%, #ede5d3 88%, #d8cdb5 100%);
             border: 1px solid #4a3f30;
             border-top: none;
@@ -367,7 +367,7 @@
         }
 
         .black-key {
-            height: 125px;
+            height: 88px;
             background: linear-gradient(180deg, #2a2420 0%, #0a0807 100%);
             border: 1px solid #000;
             border-top: none;
@@ -386,19 +386,8 @@
         }
 
         .key-label {
-            position: absolute;
-            bottom: 8px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 9px;
-            color: #8a7058;
-            font-weight: 600;
-            pointer-events: none;
-            opacity: 0.5;
+            display: none;
         }
-
-        .black-key .key-label { color: #6a5a48; bottom: 6px; }
 
         /* ───── STATUS / FOOTER ───── */
         .status-row {
@@ -594,7 +583,7 @@
 
         <div class="footer-info">
             <div>Play with <kbd>A S D F G H J K</kbd> · sharps <kbd>W E T Y U</kbd></div>
-            <div class="badge">Victory Musical Instruments · Miami</div>
+            <div class="badge">Victory Musical Instruments</div>
         </div>
     </div>
 
@@ -895,12 +884,13 @@ function buildKeybed() {
     keybed.innerHTML = '';
     keyEls.clear();
     const containerWidth = keybed.clientWidth || 1000;
-    const WHITE_KEYS_COUNT = 14;
+    const OCTAVES = 4;
+    const WHITE_KEYS_COUNT = 7 * OCTAVES;
     const wkw = containerWidth / WHITE_KEYS_COUNT;
     const bkw = wkw * 0.62;
 
     let whiteIndex = 0;
-    for (let octave = 0; octave < 2; octave++) {
+    for (let octave = 0; octave < OCTAVES; octave++) {
         for (let i = 0; i < 7; i++) {
             const midi = START_MIDI + octave * 12 + WHITE_PATTERN[i];
             const el = document.createElement('div');
@@ -908,11 +898,6 @@ function buildKeybed() {
             el.style.left = (whiteIndex * wkw) + 'px';
             el.style.width = wkw + 'px';
             el.dataset.midi = midi;
-
-            const label = document.createElement('span');
-            label.className = 'key-label';
-            label.textContent = midiToName(midi);
-            el.appendChild(label);
 
             attachKeyHandlers(el, midi);
             keybed.appendChild(el);
@@ -922,7 +907,7 @@ function buildKeybed() {
     }
 
     whiteIndex = 0;
-    for (let octave = 0; octave < 2; octave++) {
+    for (let octave = 0; octave < OCTAVES; octave++) {
         for (let i = 0; i < 7; i++) {
             const blackOffset = BLACK_AFTER_WHITE[i];
             if (blackOffset !== undefined) {
