@@ -131,9 +131,98 @@
             display: grid;
             grid-template-columns: repeat(6, 1fr);
             gap: 14px;
-            margin-bottom: 28px;
+            margin-bottom: 18px;
             position: relative;
             z-index: 1;
+        }
+
+        /* ───── OUTPUT SECTION ───── */
+        .output-section {
+            background:
+                linear-gradient(180deg, #0a0807 0%, #060403 100%);
+            border: 1px solid #000;
+            border-radius: 10px;
+            padding: 14px 16px 16px;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 1;
+            box-shadow:
+                inset 0 2px 6px rgba(0,0,0,0.7);
+        }
+
+        .output-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 3px;
+            color: var(--victory-gold-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            text-align: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(212,175,55,0.12);
+        }
+
+        .output-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        /* Gain reduction meter */
+        .gr-cell {
+            justify-content: flex-start;
+        }
+
+        .gr-meter-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 8px 0;
+            height: 64px;
+        }
+
+        .gr-meter {
+            width: 14px;
+            height: 56px;
+            background: #1a1410;
+            border: 1px solid #000;
+            border-radius: 3px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+        }
+
+        .gr-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 0%;
+            background: linear-gradient(180deg, #ff4422 0%, #ffaa22 60%, #ffcc00 100%);
+            transition: height 0.06s linear;
+        }
+
+        .gr-scale {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 56px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 6px;
+            color: var(--text-dim);
+        }
+
+        /* Master knob — red pointer like the Growler's MASTER OUT */
+        .knob.master-knob::before {
+            background: var(--led-red);
+            box-shadow: 0 0 6px rgba(255,68,34,0.7);
+        }
+
+        .knob-arc .value.master-arc {
+            stroke: var(--led-red);
         }
 
         .control-cell {
@@ -559,6 +648,56 @@
 
         </div>
 
+        <!-- ─── OUTPUT SECTION ─── -->
+        <div class="output-section">
+            <div class="output-label">Output</div>
+            <div class="output-controls">
+                <!-- COMPRESSOR -->
+                <div class="control-cell" data-knob="comp" data-min="0" data-max="1" data-default="0.25">
+                    <div class="cell-label">Compressor</div>
+                    <div class="knob-wrap">
+                        <svg class="knob-arc" viewBox="0 0 64 64">
+                            <circle class="track" cx="32" cy="32" r="30" stroke-dasharray="142 188" transform="rotate(135 32 32)"/>
+                            <circle class="value" cx="32" cy="32" r="30" stroke-dasharray="0 188" transform="rotate(135 32 32)"/>
+                        </svg>
+                        <div class="knob"></div>
+                        <div class="travel-labels">
+                            <span class="left">CLEAN</span>
+                            <span class="right">SQUEEZE</span>
+                        </div>
+                    </div>
+                    <span class="value-display">25%</span>
+                </div>
+
+                <!-- GAIN REDUCTION METER -->
+                <div class="control-cell gr-cell">
+                    <div class="cell-label">Gain Reduction</div>
+                    <div class="gr-meter-wrap">
+                        <div class="gr-meter">
+                            <div class="gr-fill" id="gr-fill"></div>
+                        </div>
+                        <div class="gr-scale">
+                            <span>0</span><span>-6</span><span>-12</span><span>-20</span>
+                        </div>
+                    </div>
+                    <span class="value-display" id="gr-display">0 dB</span>
+                </div>
+
+                <!-- MASTER VOLUME -->
+                <div class="control-cell" data-knob="master" data-min="0" data-max="1" data-default="0.8">
+                    <div class="cell-label">Master Volume</div>
+                    <div class="knob-wrap">
+                        <svg class="knob-arc" viewBox="0 0 64 64">
+                            <circle class="track" cx="32" cy="32" r="30" stroke-dasharray="142 188" transform="rotate(135 32 32)"/>
+                            <circle class="value master-arc" cx="32" cy="32" r="30" stroke-dasharray="0 188" transform="rotate(135 32 32)"/>
+                        </svg>
+                        <div class="knob master-knob"></div>
+                    </div>
+                    <span class="value-display master-display">-3.5 dB</span>
+                </div>
+            </div>
+        </div>
+
         <!-- ─── KEYBED ─── -->
         <div class="keybed-frame">
             <div class="keybed" id="keybed"></div>
@@ -590,7 +729,8 @@
 <script>
 /* ════════════════════════════════════════════════════════════
    THE BENDER ROADS — v2 ENGINE
-   Signal: Voices → Bark → Bender (HP phaser) → Pulse (StereoPan) → Out
+   Signal: Voices → Bark → Bender (HP phaser) → Pulse (StereoPan)
+         → Master → Compressor → Safety Limiter → Output
    Depth = Hammer Depth (per-voice, sets attack character)
    ════════════════════════════════════════════════════════════ */
 
@@ -599,12 +739,13 @@ const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const state = {
     bark: 0.4, bender: 0, speed: 4,
     depth: 0.5, mech: 0.7,
+    comp: 0.25, master: 0.8,
     sustain: false, octave: 0,
 };
 
 // ── Master ──
 const voiceBus = audioCtx.createGain();
-voiceBus.gain.value = 0.7;
+voiceBus.gain.value = 0.42;  // headroom: voices sum here, limiter catches the rest
 
 // ── BARK stage ──
 const barkPreGain = audioCtx.createGain();
@@ -629,7 +770,7 @@ barkEQ.Q.value = 1.4;
 barkEQ.gain.value = 0;
 
 const barkPostGain = audioCtx.createGain();
-barkPostGain.gain.value = 0.85;
+barkPostGain.gain.value = 0.62;
 
 voiceBus.connect(barkPreGain);
 barkPreGain.connect(barkSaturator);
@@ -718,15 +859,66 @@ pulseLFO.start();
 
 benderSum.connect(stereoPanner);
 
-// ── Master out ──
+// ════════════════════════════════════════════════════════════
+//  OUTPUT CHAIN
+//  stereoPanner → masterGain → userCompressor → safetyLimiter
+//               → safetyClip → outputGain → destination
+// ════════════════════════════════════════════════════════════
+
+// ── Master gain (internal staging — fixed) ──
 const masterGain = audioCtx.createGain();
-masterGain.gain.value = 0.85;
+masterGain.gain.value = 0.9;
 stereoPanner.connect(masterGain);
-masterGain.connect(audioCtx.destination);
+
+// ── USER COMPRESSOR — the musical one, driven by the Compressor knob ──
+// One knob sweeps threshold down + ratio up + makeup gain up together,
+// so the instrument goes clean → squeezed-and-punchy at even loudness.
+const userCompressor = audioCtx.createDynamicsCompressor();
+userCompressor.threshold.value = 0;    // 0 = effectively bypassed at knob 0
+userCompressor.knee.value = 10;
+userCompressor.ratio.value = 1;        // 1:1 = no compression at knob 0
+userCompressor.attack.value = 0.008;
+userCompressor.release.value = 0.18;
+masterGain.connect(userCompressor);
+
+// Makeup gain — rides up as the compressor squeezes, so perceived level holds
+const compMakeup = audioCtx.createGain();
+compMakeup.gain.value = 1;
+userCompressor.connect(compMakeup);
+
+// ── SAFETY LIMITER — always-on seatbelt, not a feature ──
+// Catches polyphonic peaks before they clip. Invisible to the player.
+const safetyLimiter = audioCtx.createDynamicsCompressor();
+safetyLimiter.threshold.value = -3;    // only acts on real overshoot
+safetyLimiter.knee.value = 3;
+safetyLimiter.ratio.value = 20;        // hard limiting
+safetyLimiter.attack.value = 0.002;
+safetyLimiter.release.value = 0.2;
+compMakeup.connect(safetyLimiter);
+
+// ── SOFT-CLIP SAFETY NET — final guard against any remaining overshoot ──
+const safetyClip = audioCtx.createWaveShaper();
+(function buildSafetyCurve() {
+    const n = 2048, curve = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+        const x = (i * 2) / n - 1;
+        curve[i] = Math.tanh(x * 1.4) / Math.tanh(1.4);
+    }
+    safetyClip.curve = curve;
+    safetyClip.oversample = '4x';
+})();
+safetyLimiter.connect(safetyClip);
+
+// ── OUTPUT GAIN — driven by the Master Volume knob ──
+const outputGain = audioCtx.createGain();
+outputGain.gain.value = 0.8;
+safetyClip.connect(outputGain);
+outputGain.connect(audioCtx.destination);
 
 // ─── VOICE ─────────────────────────────────────────────────
 const voices = new Map();
 const sustained = new Set();
+const MAX_VOICES = 16;  // polyphony cap — steals oldest voice beyond this
 
 function createVoice(freq, velocity) {
     const t = audioCtx.currentTime;
@@ -765,9 +957,9 @@ function createVoice(freq, velocity) {
     tineAmp.connect(voiceFilter);
 
     tineAmp.gain.setValueAtTime(0, t);
-    tineAmp.gain.linearRampToValueAtTime(0.55 * velocity, t + attackTime);
-    tineAmp.gain.exponentialRampToValueAtTime(0.08 * velocity, t + 0.4);
-    tineAmp.gain.exponentialRampToValueAtTime(0.001, t + 8);
+    tineAmp.gain.linearRampToValueAtTime(0.38 * velocity, t + attackTime);
+    tineAmp.gain.exponentialRampToValueAtTime(0.055 * velocity, t + 0.4);
+    tineAmp.gain.exponentialRampToValueAtTime(0.0008, t + 8);
 
     const bodyOsc = audioCtx.createOscillator();
     const bodyAmp = audioCtx.createGain();
@@ -777,9 +969,9 @@ function createVoice(freq, velocity) {
     bodyAmp.connect(voiceFilter);
 
     bodyAmp.gain.setValueAtTime(0, t);
-    bodyAmp.gain.linearRampToValueAtTime(0.35 * velocity, t + 0.006);
-    bodyAmp.gain.exponentialRampToValueAtTime(0.15 * velocity, t + 0.6);
-    bodyAmp.gain.exponentialRampToValueAtTime(0.001, t + 10);
+    bodyAmp.gain.linearRampToValueAtTime(0.24 * velocity, t + 0.006);
+    bodyAmp.gain.exponentialRampToValueAtTime(0.1 * velocity, t + 0.6);
+    bodyAmp.gain.exponentialRampToValueAtTime(0.0008, t + 10);
 
     voiceFilter.connect(voiceGain);
     voiceGain.connect(voiceBus);
@@ -793,6 +985,7 @@ function createVoice(freq, velocity) {
         tineCarrier, tineMod, tineModGain, tineAmp,
         bodyOsc, bodyAmp,
         voiceGain, voiceFilter,
+        startTime: t,
         released: false,
     };
 }
@@ -804,8 +997,15 @@ function releaseVoice(voice, immediate = false) {
     const releaseTime = immediate ? 0.05 : 0.35;
 
     [voice.tineAmp, voice.bodyAmp].forEach(amp => {
-        amp.gain.cancelScheduledValues(now);
-        amp.gain.setValueAtTime(amp.gain.value, now);
+        // cancelAndHoldAtTime keeps the curve continuous → no click.
+        // Fall back to a manual hold if the browser lacks it.
+        if (typeof amp.gain.cancelAndHoldAtTime === 'function') {
+            amp.gain.cancelAndHoldAtTime(now);
+        } else {
+            const current = amp.gain.value;
+            amp.gain.cancelScheduledValues(now);
+            amp.gain.setValueAtTime(current, now);
+        }
         amp.gain.exponentialRampToValueAtTime(0.0001, now + releaseTime);
     });
 
@@ -843,6 +1043,24 @@ function releaseVoice(voice, immediate = false) {
 function noteOn(freq, velocity = 0.85) {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     if (voices.has(freq)) releaseVoice(voices.get(freq), true);
+
+    // Voice-stealing: if at the polyphony cap, release the oldest voice first.
+    if (voices.size >= MAX_VOICES) {
+        let oldestFreq = null;
+        let oldestTime = Infinity;
+        voices.forEach((v, f) => {
+            if (v.startTime < oldestTime) {
+                oldestTime = v.startTime;
+                oldestFreq = f;
+            }
+        });
+        if (oldestFreq !== null) {
+            releaseVoice(voices.get(oldestFreq), true);
+            voices.delete(oldestFreq);
+            sustained.delete(oldestFreq);
+        }
+    }
+
     const v = createVoice(freq, velocity);
     voices.set(freq, v);
     updateVoiceDisplay();
@@ -1057,9 +1275,17 @@ function setupKnob(el) {
             case 'bender':
             case 'depth':
             case 'mech':
+            case 'comp':
                 return Math.round(v * 100) + '%';
             case 'speed':
                 return v.toFixed(1) + ' Hz';
+            case 'master': {
+                // Show as dB. v² × 1.1 gain → dB
+                const gain = v * v * 1.1;
+                if (gain < 0.0001) return '-\u221E dB';
+                const db = 20 * Math.log10(gain);
+                return (db >= 0 ? '+' : '') + db.toFixed(1) + ' dB';
+            }
         }
     }
 
@@ -1119,8 +1345,8 @@ function applyParam(param, value) {
         case 'bark':
             state.bark = value;
             barkSaturator.curve = makeBarkCurve(value);
-            barkEQ.gain.setTargetAtTime(value * 9, now, 0.05);
-            barkPreGain.gain.setTargetAtTime(1 + value * 0.8, now, 0.05);
+            barkEQ.gain.setTargetAtTime(value * 6, now, 0.05);       // 3kHz bite, capped at +6dB
+            barkPreGain.gain.setTargetAtTime(1 + value * 0.45, now, 0.05);  // gentler drive into saturator
             break;
         case 'bender':
             state.bender = value;
@@ -1140,12 +1366,31 @@ function applyParam(param, value) {
         case 'mech':
             state.mech = value;
             break;
+        case 'comp':
+            state.comp = value;
+            // One knob: threshold down, ratio up, makeup gain up — together.
+            // value 0  → threshold 0dB, ratio 1:1  (effectively bypassed)
+            // value 1  → threshold -28dB, ratio 8:1 (firmly squeezed)
+            userCompressor.threshold.setTargetAtTime(-value * 28, now, 0.05);
+            userCompressor.ratio.setTargetAtTime(1 + value * 7, now, 0.05);
+            // Makeup compensates for the gain the compressor removes
+            compMakeup.gain.setTargetAtTime(1 + value * 1.1, now, 0.05);
+            break;
+        case 'master':
+            state.master = value;
+            // Map 0..1 to a musical gain curve (squared = finer control low-end)
+            outputGain.gain.setTargetAtTime(value * value * 1.1, now, 0.03);
+            break;
     }
 }
 
 // ─── PULSE LED + PAN METER ─────────────────────────────────
 const pulseBulb = document.getElementById('pulse-bulb');
 const panIndicator = document.getElementById('pan-indicator');
+const grFill = document.getElementById('gr-fill');
+const grDisplay = document.getElementById('gr-display');
+
+let grSmoothed = 0;  // smoothed gain-reduction display value
 
 function pulseLoop() {
     const t = audioCtx.currentTime;
@@ -1164,6 +1409,14 @@ function pulseLoop() {
 
     const panPos = 50 + sinVal * 45;
     panIndicator.style.left = panPos + '%';
+
+    // ── Gain reduction meter — reads the user compressor's live reduction ──
+    // .reduction is negative dB (0 = none, -20 = heavy). Smooth it for a natural feel.
+    const reduction = userCompressor.reduction; // dB, <= 0
+    const target = Math.min(20, Math.abs(reduction));
+    grSmoothed += (target - grSmoothed) * 0.25;
+    grFill.style.height = (grSmoothed / 20 * 100) + '%';
+    grDisplay.textContent = '-' + grSmoothed.toFixed(1) + ' dB';
 
     requestAnimationFrame(pulseLoop);
 }
