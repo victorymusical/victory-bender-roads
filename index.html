@@ -3,112 +3,1198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Victory Bender Roads | Diagnostic Build</title>
+    <title>Victory Bender Roads</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --victory-gold: #d4af37; --led-on: #ffcc00; }
-        body { background-color: #121212; display: flex; justify-content: center; padding-top: 50px; margin: 0; font-family: 'Inter', Arial, sans-serif; }
-        
-        /* Chassis Engineering */
-        .chassis { width: 900px; background: #2a2a2a; border: 2px solid #111; border-radius: 10px; padding: 20px; box-shadow: 0 40px 100px rgba(0,0,0,0.8); }
-        header { display: flex; justify-content: space-between; color: var(--victory-gold); font-weight: bold; letter-spacing: 2px; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 30px; }
-        .controls-row { display: flex; justify-content: space-around; margin-bottom: 40px; }
-        .control-group, .indicator-group { display: flex; flex-direction: column; align-items: center; width: 100px; }
-        
-        /* Knobs & Pulse LED */
-        .knob { width: 50px; height: 50px; background: radial-gradient(circle, #555, #111); border: 2px solid #000; border-radius: 50%; margin-bottom: 10px; box-shadow: 0 5px 10px rgba(0,0,0,0.5); cursor: pointer; }
-        .gold-led { width: 12px; height: 12px; background: #332200; border-radius: 50%; margin: 20px auto 10px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.8); }
-        .gold-led.active { background: var(--led-on); box-shadow: 0 0 15px var(--led-on); }
-        label { color: #888; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
-        
-        /* The Professional Keybed */
-        .keybed { display: flex; justify-content: center; background: #000; padding: 20px 10px; border-radius: 5px; position: relative; height: 180px; }
-        .white-key { width: 45px; height: 180px; background: linear-gradient(to bottom, #eee 0%, #fff 100%); border: 1px solid #ccc; border-radius: 0 0 5px 5px; cursor: pointer; z-index: 1; }
-        .black-key { width: 30px; height: 110px; background: linear-gradient(to bottom, #111 0%, #333 100%); border-radius: 0 0 3px 3px; margin-left: -15px; margin-right: -15px; cursor: pointer; z-index: 2; box-shadow: 0 3px 5px rgba(0,0,0,0.5); }
-        .white-key.active { background: #ccc; }
-        .black-key.active { background: #000; }
+        :root {
+            --victory-gold: #d4af37;
+            --victory-gold-bright: #e8c862;
+            --victory-gold-dim: #8a7028;
+            --led-on: #ffcc00;
+            --led-red: #ff4422;
+            --chassis: #1a1614;
+            --chassis-light: #2a2420;
+            --panel: #0e0b09;
+            --panel-edge: #15110e;
+            --text-bright: #e8dcc4;
+            --text-dim: #6b5f55;
+            --bg: #050302;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 0%, #1a1410 0%, transparent 70%),
+                #050302;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'JetBrains Mono', monospace;
+            color: #ccc;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: auto;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 60px 20px 80px;
+        }
+
+        /* ───── TITLE (Growler-matched) ───── */
+        .title-block {
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        .title-overline {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            letter-spacing: 7px;
+            color: var(--victory-gold);
+            font-weight: 400;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .title-main {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 76px;
+            line-height: 1;
+            font-weight: 500;
+            letter-spacing: -1px;
+            margin: 0;
+        }
+
+        .title-main .the {
+            color: #ffffff;
+            font-style: normal;
+            font-weight: 500;
+        }
+
+        .title-main .bender-roads {
+            color: var(--victory-gold);
+            font-style: italic;
+            font-weight: 500;
+            margin-left: 12px;
+        }
+
+        .title-subline {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 5px;
+            color: var(--text-dim);
+            font-weight: 400;
+            margin-top: 18px;
+            text-transform: uppercase;
+        }
+
+        /* ───── CHASSIS ───── */
+        .chassis {
+            width: 1080px;
+            max-width: 100%;
+            background:
+                linear-gradient(180deg, #15110e 0%, #0a0807 100%);
+            border: 1px solid #000;
+            border-radius: 14px;
+            padding: 32px;
+            box-shadow:
+                0 60px 120px rgba(0,0,0,0.9),
+                0 20px 40px rgba(0,0,0,0.6),
+                inset 0 1px 0 rgba(255,220,160,0.06);
+            position: relative;
+        }
+
+        .chassis::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 14px;
+            background:
+                repeating-linear-gradient(
+                    90deg,
+                    transparent 0px,
+                    rgba(0,0,0,0.05) 1px,
+                    transparent 2px,
+                    transparent 8px
+                );
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        /* ───── CONTROL PANEL ───── */
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 14px;
+            margin-bottom: 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .control-cell {
+            background:
+                linear-gradient(180deg, var(--panel-edge) 0%, var(--panel) 100%);
+            border: 1px solid #000;
+            border-radius: 8px;
+            padding: 18px 12px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            box-shadow:
+                inset 0 2px 4px rgba(0,0,0,0.6),
+                inset 0 -1px 0 rgba(255,220,160,0.03);
+            position: relative;
+            min-height: 150px;
+        }
+
+        .cell-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 2.5px;
+            color: var(--victory-gold);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .knob-wrap {
+            position: relative;
+            width: 64px;
+            height: 64px;
+            margin: 4px 0;
+        }
+
+        .knob {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background:
+                radial-gradient(circle at 35% 28%, #5a4f44 0%, #2a221c 55%, #0a0604 100%);
+            border: 1px solid #000;
+            box-shadow:
+                0 4px 8px rgba(0,0,0,0.6),
+                inset 0 1px 1px rgba(255,220,160,0.18),
+                inset 0 -2px 4px rgba(0,0,0,0.5);
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            cursor: ns-resize;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .knob::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 3px;
+            height: 22px;
+            background: var(--victory-gold);
+            border-radius: 2px;
+            transform-origin: 50% 100%;
+            transform: translate(-50%, -100%) rotate(var(--rot, -135deg));
+            box-shadow: 0 0 6px rgba(212,175,55,0.7);
+        }
+
+        .knob-arc {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .knob-arc circle {
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .knob-arc .track { stroke: #1a1410; }
+        .knob-arc .value { stroke: var(--victory-gold); stroke-linecap: round; }
+
+        .travel-labels {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .travel-labels span {
+            position: absolute;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 7px;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+
+        .travel-labels .left { bottom: -2px; left: -4px; }
+        .travel-labels .right { bottom: -2px; right: -4px; }
+
+        .value-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            color: var(--victory-gold);
+            letter-spacing: 0.5px;
+            min-height: 12px;
+            margin-top: 8px;
+        }
+
+        /* PULSE cell */
+        .pulse-bulb-wrap {
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 4px 0;
+        }
+
+        .pulse-bulb {
+            width: 20px;
+            height: 20px;
+            background: #1a1408;
+            border-radius: 50%;
+            border: 1px solid #000;
+            box-shadow:
+                inset 0 1px 2px rgba(0,0,0,0.8),
+                inset 0 -1px 1px rgba(60,40,0,0.4);
+            transition: background 0.04s, box-shadow 0.04s;
+        }
+
+        .pulse-bulb.l-on {
+            background: var(--led-on);
+            box-shadow:
+                inset 0 1px 2px rgba(255,255,180,0.4),
+                0 0 18px var(--led-on),
+                -10px 0 14px rgba(255,204,0,0.5);
+        }
+
+        .pulse-bulb.r-on {
+            background: var(--led-on);
+            box-shadow:
+                inset 0 1px 2px rgba(255,255,180,0.4),
+                0 0 18px var(--led-on),
+                10px 0 14px rgba(255,204,0,0.5);
+        }
+
+        .pan-meter {
+            width: 56px;
+            height: 4px;
+            background: #1a1410;
+            border: 1px solid #000;
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .pan-meter::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 1px;
+            height: 100%;
+            background: rgba(212,175,55,0.3);
+            transform: translateX(-0.5px);
+        }
+
+        .pan-meter .indicator {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 4px;
+            height: 100%;
+            background: var(--victory-gold);
+            border-radius: 2px;
+            transform: translateX(-50%);
+            transition: left 0.05s linear;
+            box-shadow: 0 0 4px var(--victory-gold);
+        }
+
+        /* ───── KEYBED ───── */
+        .keybed-frame {
+            background: linear-gradient(180deg, #000 0%, #0a0807 100%);
+            border: 1px solid #000;
+            border-radius: 8px;
+            padding: 14px;
+            box-shadow:
+                inset 0 3px 8px rgba(0,0,0,0.8);
+            position: relative;
+            z-index: 1;
+        }
+
+        .keybed {
+            position: relative;
+            height: 200px;
+            background: #000;
+            border-radius: 4px;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        .key {
+            position: absolute;
+            top: 0;
+            cursor: pointer;
+            transition: background 0.04s, transform 0.04s;
+            user-select: none;
+        }
+
+        .white-key {
+            height: 200px;
+            background: linear-gradient(180deg, #f5f0e6 0%, #ede5d3 88%, #d8cdb5 100%);
+            border: 1px solid #4a3f30;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            box-shadow:
+                inset 0 -6px 8px rgba(120,90,40,0.15),
+                inset 2px 0 3px rgba(0,0,0,0.08);
+            z-index: 1;
+        }
+
+        .white-key.active {
+            background: linear-gradient(180deg, #d8cdb5 0%, #c8b89a 100%);
+            box-shadow:
+                inset 0 -4px 12px rgba(80,60,20,0.3),
+                inset 0 2px 6px rgba(0,0,0,0.2);
+            transform: translateY(1px);
+        }
+
+        .black-key {
+            height: 125px;
+            background: linear-gradient(180deg, #2a2420 0%, #0a0807 100%);
+            border: 1px solid #000;
+            border-top: none;
+            border-radius: 0 0 3px 3px;
+            z-index: 2;
+            box-shadow:
+                0 3px 4px rgba(0,0,0,0.6),
+                inset 0 -3px 4px rgba(80,60,30,0.2),
+                inset 2px 0 2px rgba(0,0,0,0.4);
+        }
+
+        .black-key.active {
+            background: linear-gradient(180deg, #000 0%, #1a1410 100%);
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.8);
+            transform: translateY(1px);
+        }
+
+        .key-label {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            color: #8a7058;
+            font-weight: 600;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .black-key .key-label { color: #6a5a48; bottom: 6px; }
+
+        /* ───── STATUS / FOOTER ───── */
+        .status-row {
+            display: flex;
+            justify-content: center;
+            gap: 36px;
+            margin-top: 16px;
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            position: relative;
+            z-index: 1;
+            flex-wrap: wrap;
+        }
+
+        .status-item { display: flex; align-items: center; gap: 8px; }
+        .status-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #2a2420; border: 1px solid #000;
+        }
+        .status-dot.on {
+            background: var(--led-on);
+            box-shadow: 0 0 6px var(--led-on);
+        }
+
+        kbd {
+            background: #15110e;
+            border: 1px solid #2a2420;
+            border-radius: 3px;
+            padding: 1px 6px;
+            color: var(--victory-gold);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+        }
+
+        .footer-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding: 0 4px;
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            color: var(--victory-gold);
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            letter-spacing: 2px;
+        }
+
+        @media (max-width: 1120px) {
+            .chassis { padding: 20px; }
+            .control-panel { grid-template-columns: repeat(3, 1fr); }
+            .title-main { font-size: 56px; }
+        }
+
+        @media (max-width: 640px) {
+            .control-panel { grid-template-columns: repeat(2, 1fr); }
+            .title-main { font-size: 44px; }
+            .title-overline { font-size: 10px; letter-spacing: 4px; }
+        }
     </style>
 </head>
 <body>
-    <div class="chassis">
-        <header>
-            <div class="logo">VICTORY</div>
-            <div class="model-name">BENDER ROADS</div>
-        </header>
 
-        <div class="controls-row">
-            <div class="control-group"><div class="knob"></div><label>BARK</label></div>
-            <div class="control-group"><div class="knob"></div><label>BENDER</label></div>
-            <div class="indicator-group"><div class="gold-led" id="tremolo-led"></div><label>PULSE</label></div>
-            <div class="control-group"><div class="knob"></div><label>SPEED</label></div>
-            <div class="control-group"><div class="knob"></div><label>MECHANICALS</label></div>
-        </div>
-
-        <div class="keybed" id="piano-keys"></div>
+    <!-- ═══ TITLE BLOCK (matches The Growler) ═══ -->
+    <div class="title-block">
+        <div class="title-overline">Victory Musical Instruments</div>
+        <h1 class="title-main">
+            <span class="the">The</span><span class="bender-roads">Bender Roads</span>
+        </h1>
+        <div class="title-subline">Tine Electric Piano Engine</div>
     </div>
 
-    <script>
-        // Self-Contained Web Audio Engine
-        console.log("Victory Diagnostic Engine: Booting...");
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const voices = new Map();
-        
-        // Wake up audio context on interaction
-        window.addEventListener('mousedown', () => {
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-                console.log("Audio Context: ONLINE");
+    <!-- ═══ CHASSIS ═══ -->
+    <div class="chassis">
+
+        <!-- ─── CONTROL PANEL ─── -->
+        <div class="control-panel">
+
+            <!-- BARK -->
+            <div class="control-cell" data-knob="bark" data-min="0" data-max="1" data-default="0.4">
+                <div class="cell-label">Bark</div>
+                <div class="knob-wrap">
+                    <svg class="knob-arc" viewBox="0 0 64 64">
+                        <circle class="track" cx="32" cy="32" r="30" stroke-dasharray="142 188" transform="rotate(135 32 32)"/>
+                        <circle class="value" cx="32" cy="32" r="30" stroke-dasharray="0 188" transform="rotate(135 32 32)"/>
+                    </svg>
+                    <div class="knob"></div>
+                    <div class="travel-labels">
+                        <span class="left">SILK</span>
+                        <span class="right">STEEL</span>
+                    </div>
+                </div>
+                <span class="value-display">40%</span>
+            </div>
+
+            <!-- BENDER -->
+            <div class="control-cell" data-knob="bender" data-min="0" data-max="1" data-default="0">
+                <div class="cell-label">Bender</div>
+                <div class="knob-wrap">
+                    <svg class="knob-arc" viewBox="0 0 64 64">
+                        <circle class="track" cx="32" cy="32" r="30" stroke-dasharray="142 188" transform="rotate(135 32 32)"/>
+                        <circle class="value" cx="32" cy="32" r="30" stroke-dasharray="0 188" transform="rotate(135 32 32)"/>
+                    </svg>
+                    <div class="knob"></div>
+                </div>
+                <span class="value-display">0%</span>
+            </div>
+
+            <!-- PULSE indicator -->
+            <div class="control-cell">
+                <div class="cell-label">Pulse</div>
+                <div class="pulse-bulb-wrap">
+                    <div class="pulse-bulb" id="pulse-bulb"></div>
+                </div>
+                <div class="pan-meter"><div class="indicator" id="pan-indicator"></div></div>
+                <span class="value-display" id="pulse-display">Stereo</span>
+            </div>
+
+            <!-- SPEED -->
+            <div class="control-cell" data-knob="speed" data-min="0.3" data-max="9" data-default="4">
+                <div class="cell-label">Speed</div>
+                <div class="knob-wrap">
+                    <svg class="knob-arc" viewBox="0 0 64 64">
+                        <circle class="track" cx="32" cy="32" r="30" stroke-dasharray="142 188" transform="rotate(135 32 32)"/>
+                        <circle class="value" cx="32" cy="32" r="30" stroke-dasharray="0 188" transform="rotate(135 32 32)"/>
+                    </svg>
+                    <div class="knob"></div>
+                </div>
+                <span class="value-display">4.0 Hz</span>
+            </div>
+
+            <!-- DEPTH (HAMMER DEPTH) -->
+            <div class="control-cell" data-knob="depth" data-min="0" data-max="1" data-default="0.5">
+                <div class="cell-label">Depth</div>
+                <div class="knob-wrap">
+                    <svg class="knob-arc" viewBox="0 0 64 64">
+                        <circle class="track" cx="32" cy="32" r="30" stroke-dasharray="142 188" transform="rotate(135 32 32)"/>
+                        <circle class="value" cx="32" cy="32" r="30" stroke-dasharray="0 188" transform="rotate(135 32 32)"/>
+                    </svg>
+                    <div class="knob"></div>
+                    <div class="travel-labels">
+                        <span class="left">SOFT</span>
+                        <span class="right">HARD</span>
+                    </div>
+                </div>
+                <span class="value-display">50%</span>
+            </div>
+
+            <!-- MECHANICALS -->
+            <div class="control-cell" data-knob="mech" data-min="0" data-max="1" data-default="0.7">
+                <div class="cell-label">Mechanicals</div>
+                <div class="knob-wrap">
+                    <svg class="knob-arc" viewBox="0 0 64 64">
+                        <circle class="track" cx="32" cy="32" r="30" stroke-dasharray="142 188" transform="rotate(135 32 32)"/>
+                        <circle class="value" cx="32" cy="32" r="30" stroke-dasharray="0 188" transform="rotate(135 32 32)"/>
+                    </svg>
+                    <div class="knob"></div>
+                </div>
+                <span class="value-display">70%</span>
+            </div>
+
+        </div>
+
+        <!-- ─── KEYBED ─── -->
+        <div class="keybed-frame">
+            <div class="keybed" id="keybed"></div>
+        </div>
+
+        <!-- ─── STATUS ─── -->
+        <div class="status-row">
+            <div class="status-item">
+                <span class="status-dot" id="sustain-dot"></span>
+                <span>SUSTAIN · <kbd>SPACE</kbd></span>
+            </div>
+            <div class="status-item">
+                <span>OCTAVE</span>
+                <span style="color:var(--victory-gold)" id="octave-display">0</span>
+                <span>· <kbd>Z</kbd> <kbd>X</kbd></span>
+            </div>
+            <div class="status-item">
+                <span class="status-dot" id="voices-dot"></span>
+                <span>VOICES · <span id="voices-count" style="color:var(--victory-gold)">0</span></span>
+            </div>
+        </div>
+
+        <div class="footer-info">
+            <div>Play with <kbd>A S D F G H J K</kbd> · sharps <kbd>W E T Y U</kbd></div>
+            <div class="badge">Victory Musical Instruments · Miami</div>
+        </div>
+    </div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   THE BENDER ROADS — v2 ENGINE
+   Signal: Voices → Bark → Bender (HP phaser) → Pulse (StereoPan) → Out
+   Depth = Hammer Depth (per-voice, sets attack character)
+   ════════════════════════════════════════════════════════════ */
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+const state = {
+    bark: 0.4, bender: 0, speed: 4,
+    depth: 0.5, mech: 0.7,
+    sustain: false, octave: 0,
+};
+
+// ── Master ──
+const voiceBus = audioCtx.createGain();
+voiceBus.gain.value = 0.7;
+
+// ── BARK stage ──
+const barkPreGain = audioCtx.createGain();
+barkPreGain.gain.value = 1;
+const barkSaturator = audioCtx.createWaveShaper();
+function makeBarkCurve(drive) {
+    const n = 2048, curve = new Float32Array(n);
+    const k = drive * 50;
+    for (let i = 0; i < n; i++) {
+        const x = (i * 2) / n - 1;
+        curve[i] = (1 + k) * x / (1 + k * Math.abs(x));
+    }
+    return curve;
+}
+barkSaturator.curve = makeBarkCurve(0.4);
+barkSaturator.oversample = '4x';
+
+const barkEQ = audioCtx.createBiquadFilter();
+barkEQ.type = 'peaking';
+barkEQ.frequency.value = 3000;
+barkEQ.Q.value = 1.4;
+barkEQ.gain.value = 0;
+
+const barkPostGain = audioCtx.createGain();
+barkPostGain.gain.value = 0.85;
+
+voiceBus.connect(barkPreGain);
+barkPreGain.connect(barkSaturator);
+barkSaturator.connect(barkEQ);
+barkEQ.connect(barkPostGain);
+
+// ── BENDER stage ──
+const benderInput = audioCtx.createGain();
+barkPostGain.connect(benderInput);
+
+const lowSplit = audioCtx.createBiquadFilter();
+lowSplit.type = 'lowpass';
+lowSplit.frequency.value = 800;
+lowSplit.Q.value = 0.7;
+benderInput.connect(lowSplit);
+
+const highSplit = audioCtx.createBiquadFilter();
+highSplit.type = 'highpass';
+highSplit.frequency.value = 800;
+highSplit.Q.value = 0.7;
+benderInput.connect(highSplit);
+
+const ap1 = audioCtx.createBiquadFilter();
+const ap2 = audioCtx.createBiquadFilter();
+const ap3 = audioCtx.createBiquadFilter();
+const ap4 = audioCtx.createBiquadFilter();
+[ap1, ap2, ap3, ap4].forEach(ap => {
+    ap.type = 'allpass';
+    ap.Q.value = 4;
+});
+
+const phaserLFO = audioCtx.createOscillator();
+phaserLFO.type = 'sine';
+phaserLFO.frequency.value = 0.4;
+
+const phaserDepth = audioCtx.createGain();
+phaserDepth.gain.value = 0;
+
+function attachPhaserStage(ap, center) {
+    const offset = audioCtx.createConstantSource();
+    offset.offset.value = center;
+    offset.start();
+    offset.connect(ap.frequency);
+    phaserDepth.connect(ap.frequency);
+}
+attachPhaserStage(ap1, 800);
+attachPhaserStage(ap2, 1600);
+attachPhaserStage(ap3, 2400);
+attachPhaserStage(ap4, 3500);
+
+phaserLFO.connect(phaserDepth);
+phaserLFO.start();
+
+const benderWet = audioCtx.createGain();
+benderWet.gain.value = 0;
+const benderDry = audioCtx.createGain();
+benderDry.gain.value = 1;
+
+highSplit.connect(ap1);
+ap1.connect(ap2);
+ap2.connect(ap3);
+ap3.connect(ap4);
+ap4.connect(benderWet);
+highSplit.connect(benderDry);
+
+const benderSum = audioCtx.createGain();
+benderSum.gain.value = 1;
+lowSplit.connect(benderSum);
+benderDry.connect(benderSum);
+benderWet.connect(benderSum);
+
+// ── PULSE (stereo pan tremolo) ──
+const stereoPanner = audioCtx.createStereoPanner();
+stereoPanner.pan.value = 0;
+
+const pulseLFO = audioCtx.createOscillator();
+pulseLFO.type = 'sine';
+pulseLFO.frequency.value = state.speed;
+
+const pulseDepth = audioCtx.createGain();
+pulseDepth.gain.value = 0.85;
+
+pulseLFO.connect(pulseDepth);
+pulseDepth.connect(stereoPanner.pan);
+pulseLFO.start();
+
+benderSum.connect(stereoPanner);
+
+// ── Master out ──
+const masterGain = audioCtx.createGain();
+masterGain.gain.value = 0.85;
+stereoPanner.connect(masterGain);
+masterGain.connect(audioCtx.destination);
+
+// ─── VOICE ─────────────────────────────────────────────────
+const voices = new Map();
+const sustained = new Set();
+
+function createVoice(freq, velocity) {
+    const t = audioCtx.currentTime;
+
+    const voiceGain = audioCtx.createGain();
+    voiceGain.gain.value = 1;
+
+    const voiceFilter = audioCtx.createBiquadFilter();
+    voiceFilter.type = 'lowpass';
+    voiceFilter.frequency.setValueAtTime(4500 + velocity * 3500, t);
+    voiceFilter.frequency.exponentialRampToValueAtTime(1100, t + 4);
+    voiceFilter.Q.value = 0.7;
+
+    const tineCarrier = audioCtx.createOscillator();
+    const tineMod = audioCtx.createOscillator();
+    const tineModGain = audioCtx.createGain();
+    const tineAmp = audioCtx.createGain();
+
+    tineCarrier.type = 'sine';
+    tineMod.type = 'sine';
+    tineCarrier.frequency.value = freq;
+    tineMod.frequency.value = freq * 14;
+
+    // DEPTH = hammer depth → attack character
+    const hammerStrength = state.depth;
+    const baseModIndex = freq * (1.5 + hammerStrength * 9);
+    const peakModIndex = baseModIndex * (0.4 + velocity * 1.2);
+    const attackTime = 0.001 + (1 - hammerStrength) * 0.012;
+
+    tineModGain.gain.setValueAtTime(peakModIndex, t);
+    tineModGain.gain.exponentialRampToValueAtTime(Math.max(0.01, peakModIndex * 0.03), t + 0.5);
+
+    tineMod.connect(tineModGain);
+    tineModGain.connect(tineCarrier.frequency);
+    tineCarrier.connect(tineAmp);
+    tineAmp.connect(voiceFilter);
+
+    tineAmp.gain.setValueAtTime(0, t);
+    tineAmp.gain.linearRampToValueAtTime(0.55 * velocity, t + attackTime);
+    tineAmp.gain.exponentialRampToValueAtTime(0.08 * velocity, t + 0.4);
+    tineAmp.gain.exponentialRampToValueAtTime(0.001, t + 8);
+
+    const bodyOsc = audioCtx.createOscillator();
+    const bodyAmp = audioCtx.createGain();
+    bodyOsc.type = 'triangle';
+    bodyOsc.frequency.value = freq;
+    bodyOsc.connect(bodyAmp);
+    bodyAmp.connect(voiceFilter);
+
+    bodyAmp.gain.setValueAtTime(0, t);
+    bodyAmp.gain.linearRampToValueAtTime(0.35 * velocity, t + 0.006);
+    bodyAmp.gain.exponentialRampToValueAtTime(0.15 * velocity, t + 0.6);
+    bodyAmp.gain.exponentialRampToValueAtTime(0.001, t + 10);
+
+    voiceFilter.connect(voiceGain);
+    voiceGain.connect(voiceBus);
+
+    tineCarrier.start(t);
+    tineMod.start(t);
+    bodyOsc.start(t);
+
+    return {
+        freq, velocity,
+        tineCarrier, tineMod, tineModGain, tineAmp,
+        bodyOsc, bodyAmp,
+        voiceGain, voiceFilter,
+        released: false,
+    };
+}
+
+function releaseVoice(voice, immediate = false) {
+    if (!voice || voice.released) return;
+    voice.released = true;
+    const now = audioCtx.currentTime;
+    const releaseTime = immediate ? 0.05 : 0.35;
+
+    [voice.tineAmp, voice.bodyAmp].forEach(amp => {
+        amp.gain.cancelScheduledValues(now);
+        amp.gain.setValueAtTime(amp.gain.value, now);
+        amp.gain.exponentialRampToValueAtTime(0.0001, now + releaseTime);
+    });
+
+    if (state.mech > 0.05 && !immediate) {
+        const noiseLen = 0.08;
+        const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * noiseLen, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < data.length; i++) {
+            data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+        }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const noiseFilter = audioCtx.createBiquadFilter();
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.value = 180;
+        noiseFilter.Q.value = 3;
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.value = 0.04 * state.mech;
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(voiceBus);
+        noise.start(now);
+        noise.stop(now + noiseLen);
+    }
+
+    setTimeout(() => {
+        try {
+            voice.tineCarrier.stop();
+            voice.tineMod.stop();
+            voice.bodyOsc.stop();
+        } catch(e) {}
+    }, releaseTime * 1000 + 50);
+}
+
+function noteOn(freq, velocity = 0.85) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (voices.has(freq)) releaseVoice(voices.get(freq), true);
+    const v = createVoice(freq, velocity);
+    voices.set(freq, v);
+    updateVoiceDisplay();
+}
+
+function noteOff(freq) {
+    const v = voices.get(freq);
+    if (!v) return;
+    if (state.sustain) {
+        sustained.add(freq);
+    } else {
+        releaseVoice(v);
+        voices.delete(freq);
+        updateVoiceDisplay();
+    }
+}
+
+function updateVoiceDisplay() {
+    const count = voices.size;
+    document.getElementById('voices-count').textContent = count;
+    document.getElementById('voices-dot').classList.toggle('on', count > 0);
+}
+
+// ─── KEYBED ────────────────────────────────────────────────
+const START_MIDI = 48;
+const WHITE_PATTERN = [0,2,4,5,7,9,11];
+const BLACK_AFTER_WHITE = {0:1, 1:3, 3:6, 4:8, 5:10};
+
+function midiToFreq(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
+function midiToName(midi) {
+    const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    return names[midi % 12] + Math.floor(midi / 12 - 1);
+}
+
+const keybed = document.getElementById('keybed');
+const keyEls = new Map();
+
+function buildKeybed() {
+    keybed.innerHTML = '';
+    keyEls.clear();
+    const containerWidth = keybed.clientWidth || 1000;
+    const WHITE_KEYS_COUNT = 14;
+    const wkw = containerWidth / WHITE_KEYS_COUNT;
+    const bkw = wkw * 0.62;
+
+    let whiteIndex = 0;
+    for (let octave = 0; octave < 2; octave++) {
+        for (let i = 0; i < 7; i++) {
+            const midi = START_MIDI + octave * 12 + WHITE_PATTERN[i];
+            const el = document.createElement('div');
+            el.className = 'key white-key';
+            el.style.left = (whiteIndex * wkw) + 'px';
+            el.style.width = wkw + 'px';
+            el.dataset.midi = midi;
+
+            const label = document.createElement('span');
+            label.className = 'key-label';
+            label.textContent = midiToName(midi);
+            el.appendChild(label);
+
+            attachKeyHandlers(el, midi);
+            keybed.appendChild(el);
+            keyEls.set(midi, el);
+            whiteIndex++;
+        }
+    }
+
+    whiteIndex = 0;
+    for (let octave = 0; octave < 2; octave++) {
+        for (let i = 0; i < 7; i++) {
+            const blackOffset = BLACK_AFTER_WHITE[i];
+            if (blackOffset !== undefined) {
+                const blackMidi = START_MIDI + octave * 12 + blackOffset;
+                const el = document.createElement('div');
+                el.className = 'key black-key';
+                el.style.left = ((whiteIndex + 1) * wkw - bkw / 2) + 'px';
+                el.style.width = bkw + 'px';
+                el.dataset.midi = blackMidi;
+                attachKeyHandlers(el, blackMidi);
+                keybed.appendChild(el);
+                keyEls.set(blackMidi, el);
+            }
+            whiteIndex++;
+        }
+    }
+}
+
+function attachKeyHandlers(el, midi) {
+    let pressed = false;
+
+    const press = (e) => {
+        if (e) e.preventDefault();
+        if (pressed) return;
+        pressed = true;
+        const velocity = 0.75 + Math.random() * 0.2;
+        const freq = midiToFreq(midi + state.octave * 12);
+        el.classList.add('active');
+        el.dataset.playingFreq = freq;
+        noteOn(freq, velocity);
+    };
+    const release = () => {
+        if (!pressed) return;
+        pressed = false;
+        el.classList.remove('active');
+        const freq = parseFloat(el.dataset.playingFreq);
+        if (freq) noteOff(freq);
+    };
+
+    el.addEventListener('mousedown', press);
+    el.addEventListener('mouseup', release);
+    el.addEventListener('mouseleave', release);
+    el.addEventListener('touchstart', press, { passive: false });
+    el.addEventListener('touchend', release);
+}
+
+buildKeybed();
+window.addEventListener('resize', buildKeybed);
+
+// ─── QWERTY ────────────────────────────────────────────────
+const QWERTY_MAP = {
+    'a': 60, 'w': 61, 's': 62, 'e': 63, 'd': 64,
+    'f': 65, 't': 66, 'g': 67, 'y': 68, 'h': 69,
+    'u': 70, 'j': 71, 'k': 72, 'o': 73, 'l': 74,
+    'p': 75, ';': 76,
+};
+const heldKeys = new Set();
+
+window.addEventListener('keydown', (e) => {
+    if (e.repeat) return;
+    const k = e.key.toLowerCase();
+
+    if (k === ' ') {
+        e.preventDefault();
+        if (!state.sustain) {
+            state.sustain = true;
+            document.getElementById('sustain-dot').classList.add('on');
+        }
+        return;
+    }
+    if (k === 'z') {
+        state.octave = Math.max(-2, state.octave - 1);
+        document.getElementById('octave-display').textContent = state.octave > 0 ? '+' + state.octave : state.octave;
+        return;
+    }
+    if (k === 'x') {
+        state.octave = Math.min(2, state.octave + 1);
+        document.getElementById('octave-display').textContent = state.octave > 0 ? '+' + state.octave : state.octave;
+        return;
+    }
+
+    if (QWERTY_MAP[k] !== undefined && !heldKeys.has(k)) {
+        heldKeys.add(k);
+        const midi = QWERTY_MAP[k];
+        const freq = midiToFreq(midi + state.octave * 12);
+        noteOn(freq, 0.85);
+        const el = keyEls.get(midi);
+        if (el) el.classList.add('active');
+    }
+});
+
+window.addEventListener('keyup', (e) => {
+    const k = e.key.toLowerCase();
+    if (k === ' ') {
+        state.sustain = false;
+        document.getElementById('sustain-dot').classList.remove('on');
+        sustained.forEach(freq => {
+            const v = voices.get(freq);
+            if (v) {
+                releaseVoice(v);
+                voices.delete(freq);
             }
         });
+        sustained.clear();
+        updateVoiceDisplay();
+        return;
+    }
+    if (QWERTY_MAP[k] !== undefined && heldKeys.has(k)) {
+        heldKeys.delete(k);
+        const midi = QWERTY_MAP[k];
+        const freq = midiToFreq(midi + state.octave * 12);
+        noteOff(freq);
+        const el = keyEls.get(midi);
+        if (el) el.classList.remove('active');
+    }
+});
 
-        // Activate the Gold Pulse LED
-        const led = document.getElementById('tremolo-led');
-        setInterval(() => { if(led) led.classList.toggle('active'); }, 125);
+// ─── KNOBS ─────────────────────────────────────────────────
+document.querySelectorAll('.control-cell[data-knob]').forEach(setupKnob);
 
-        // Core Signal Generation
-        function playNote(frequency) {
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-            
-            // The 8-12 Second Decay
-            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 10);
-            
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            osc.start();
-            voices.set(frequency, { osc, gainNode });
+function setupKnob(el) {
+    const param = el.dataset.knob;
+    const min = parseFloat(el.dataset.min);
+    const max = parseFloat(el.dataset.max);
+    const def = parseFloat(el.dataset.default);
+    const knob = el.querySelector('.knob');
+    const valueDisplay = el.querySelector('.value-display');
+    const arcValue = el.querySelector('.knob-arc .value');
+
+    let value = def;
+    let dragging = false;
+    let startY = 0, startVal = 0;
+
+    function setValue(v) {
+        value = Math.max(min, Math.min(max, v));
+        const norm = (value - min) / (max - min);
+        const rot = -135 + norm * 270;
+        knob.style.setProperty('--rot', rot + 'deg');
+        arcValue.setAttribute('stroke-dasharray', `${norm * 142} 188`);
+        valueDisplay.textContent = formatValue(param, value);
+        applyParam(param, value);
+    }
+
+    function formatValue(p, v) {
+        switch(p) {
+            case 'bark':
+            case 'bender':
+            case 'depth':
+            case 'mech':
+                return Math.round(v * 100) + '%';
+            case 'speed':
+                return v.toFixed(1) + ' Hz';
         }
+    }
 
-        function stopNote(frequency) {
-            const voice = voices.get(frequency);
-            if (voice) {
-                const now = audioCtx.currentTime;
-                voice.gainNode.gain.cancelScheduledValues(now);
-                voice.gainNode.gain.setValueAtTime(voice.gainNode.gain.value, now);
-                voice.gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-                setTimeout(() => { voice.osc.stop(); voices.delete(frequency); }, 100);
-            }
-        }
+    knob.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        dragging = true;
+        startY = e.clientY;
+        startVal = value;
+        document.body.style.cursor = 'ns-resize';
+    });
 
-        // Render Physical Keys
-        const keybed = document.getElementById('piano-keys');
-        const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-        
-        for (let i = 0; i < 24; i++) {
-            const isSharp = notes[i % 12].includes('#');
-            const key = document.createElement('div');
-            key.className = isSharp ? 'black-key' : 'white-key';
-            const freq = 261.63 * Math.pow(2, i / 12); // Middle C reference
-            
-            key.addEventListener('mousedown', () => { playNote(freq); key.classList.add('active'); });
-            key.addEventListener('mouseup', () => { stopNote(freq); key.classList.remove('active'); });
-            key.addEventListener('mouseleave', () => { stopNote(freq); key.classList.remove('active'); });
-            
-            keybed.appendChild(key);
+    window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const dy = startY - e.clientY;
+        const range = max - min;
+        setValue(startVal + (dy / 150) * range);
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (dragging) {
+            dragging = false;
+            document.body.style.cursor = '';
         }
-        console.log("Victory Diagnostic Engine: Ready");
-    </script>
+    });
+
+    knob.addEventListener('dblclick', () => setValue(def));
+
+    knob.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const range = max - min;
+        const step = range / 100;
+        setValue(value - Math.sign(e.deltaY) * step);
+    }, { passive: false });
+
+    let touchStartY = 0, touchStartVal = 0;
+    knob.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        touchStartY = e.touches[0].clientY;
+        touchStartVal = value;
+        dragging = true;
+    }, { passive: false });
+    knob.addEventListener('touchmove', (e) => {
+        if (!dragging) return;
+        e.preventDefault();
+        const dy = touchStartY - e.touches[0].clientY;
+        const range = max - min;
+        setValue(touchStartVal + (dy / 150) * range);
+    }, { passive: false });
+    knob.addEventListener('touchend', () => { dragging = false; });
+
+    setValue(def);
+}
+
+function applyParam(param, value) {
+    const now = audioCtx.currentTime;
+    switch(param) {
+        case 'bark':
+            state.bark = value;
+            barkSaturator.curve = makeBarkCurve(value);
+            barkEQ.gain.setTargetAtTime(value * 9, now, 0.05);
+            barkPreGain.gain.setTargetAtTime(1 + value * 0.8, now, 0.05);
+            break;
+        case 'bender':
+            state.bender = value;
+            benderWet.gain.setTargetAtTime(value * 0.9, now, 0.05);
+            benderDry.gain.setTargetAtTime(1 - value * 0.5, now, 0.05);
+            phaserDepth.gain.setTargetAtTime(value * 1400, now, 0.05);
+            phaserLFO.frequency.setTargetAtTime(0.25 + value * 0.6, now, 0.1);
+            break;
+        case 'speed':
+            state.speed = value;
+            pulseLFO.frequency.setTargetAtTime(value, now, 0.05);
+            document.getElementById('pulse-display').textContent = value.toFixed(1) + ' Hz';
+            break;
+        case 'depth':
+            state.depth = value;
+            break;
+        case 'mech':
+            state.mech = value;
+            break;
+    }
+}
+
+// ─── PULSE LED + PAN METER ─────────────────────────────────
+const pulseBulb = document.getElementById('pulse-bulb');
+const panIndicator = document.getElementById('pan-indicator');
+
+function pulseLoop() {
+    const t = audioCtx.currentTime;
+    const phase = (t * state.speed) % 1;
+    const sinVal = Math.sin(phase * Math.PI * 2);
+
+    if (sinVal > 0.3) {
+        pulseBulb.classList.add('r-on');
+        pulseBulb.classList.remove('l-on');
+    } else if (sinVal < -0.3) {
+        pulseBulb.classList.add('l-on');
+        pulseBulb.classList.remove('r-on');
+    } else {
+        pulseBulb.classList.remove('l-on', 'r-on');
+    }
+
+    const panPos = 50 + sinVal * 45;
+    panIndicator.style.left = panPos + '%';
+
+    requestAnimationFrame(pulseLoop);
+}
+pulseLoop();
+
+// ─── RESUME AUDIO ──────────────────────────────────────────
+const resumeAudio = () => {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+};
+window.addEventListener('mousedown', resumeAudio, { once: true });
+window.addEventListener('keydown', resumeAudio, { once: true });
+window.addEventListener('touchstart', resumeAudio, { once: true });
+
+console.log('%cTHE BENDER ROADS', 'color:#d4af37;font-size:18px;font-weight:bold;letter-spacing:4px;font-style:italic;');
+console.log('Tine electric piano engine online.');
+console.log('• Pulse: stereo tremolo  • Bark: silk→steel drive  • Bender: harmonic phaser  • Depth: hammer voicing');
+</script>
 </body>
 </html>
