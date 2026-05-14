@@ -3,45 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Victory Bender Roads</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Victory Bender Roads | Diagnostic Build</title>
+    <style>
+        :root { --victory-gold: #d4af37; --led-on: #ffcc00; }
+        body { background-color: #121212; display: flex; justify-content: center; padding-top: 50px; margin: 0; font-family: 'Inter', Arial, sans-serif; }
+        
+        /* Chassis Engineering */
+        .chassis { width: 900px; background: #2a2a2a; border: 2px solid #111; border-radius: 10px; padding: 20px; box-shadow: 0 40px 100px rgba(0,0,0,0.8); }
+        header { display: flex; justify-content: space-between; color: var(--victory-gold); font-weight: bold; letter-spacing: 2px; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 30px; }
+        .controls-row { display: flex; justify-content: space-around; margin-bottom: 40px; }
+        .control-group, .indicator-group { display: flex; flex-direction: column; align-items: center; width: 100px; }
+        
+        /* Knobs & Pulse LED */
+        .knob { width: 50px; height: 50px; background: radial-gradient(circle, #555, #111); border: 2px solid #000; border-radius: 50%; margin-bottom: 10px; box-shadow: 0 5px 10px rgba(0,0,0,0.5); cursor: pointer; }
+        .gold-led { width: 12px; height: 12px; background: #332200; border-radius: 50%; margin: 20px auto 10px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.8); }
+        .gold-led.active { background: var(--led-on); box-shadow: 0 0 15px var(--led-on); }
+        label { color: #888; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+        
+        /* The Professional Keybed */
+        .keybed { display: flex; justify-content: center; background: #000; padding: 20px 10px; border-radius: 5px; position: relative; height: 180px; }
+        .white-key { width: 45px; height: 180px; background: linear-gradient(to bottom, #eee 0%, #fff 100%); border: 1px solid #ccc; border-radius: 0 0 5px 5px; cursor: pointer; z-index: 1; }
+        .black-key { width: 30px; height: 110px; background: linear-gradient(to bottom, #111 0%, #333 100%); border-radius: 0 0 3px 3px; margin-left: -15px; margin-right: -15px; cursor: pointer; z-index: 2; box-shadow: 0 3px 5px rgba(0,0,0,0.5); }
+        .white-key.active { background: #ccc; }
+        .black-key.active { background: #000; }
+    </style>
 </head>
 <body>
-    <div class="instrument-wrap">
-        <div class="chassis">
-            <header>
-                <div class="logo">VICTORY</div>
-                <div class="model-name">BENDER ROADS</div>
-            </header>
+    <div class="chassis">
+        <header>
+            <div class="logo">VICTORY</div>
+            <div class="model-name">BENDER ROADS</div>
+        </header>
 
-            <div class="controls-row">
-                <div class="control-group">
-                    <div class="knob" id="bark-knob"></div>
-                    <label>BARK</label>
-                </div>
-                <div class="control-group">
-                    <div class="knob" id="bender-knob"></div>
-                    <label>BENDER</label>
-                </div>
-                <div class="indicator-group">
-                    <div class="gold-led" id="tremolo-led"></div>
-                    <label>PULSE</label>
-                </div>
-                <div class="control-group">
-                    <div class="knob" id="speed-knob"></div>
-                    <label>SPEED</label>
-                </div>
-                <div class="control-group">
-                    <div class="knob" id="mech-knob"></div>
-                    <label>MECHANICALS</label>
-                </div>
-            </div>
-
-            <!-- The Keybed Container -->
-            <div class="keybed" id="piano-keys"></div>
+        <div class="controls-row">
+            <div class="control-group"><div class="knob"></div><label>BARK</label></div>
+            <div class="control-group"><div class="knob"></div><label>BENDER</label></div>
+            <div class="indicator-group"><div class="gold-led" id="tremolo-led"></div><label>PULSE</label></div>
+            <div class="control-group"><div class="knob"></div><label>SPEED</label></div>
+            <div class="control-group"><div class="knob"></div><label>MECHANICALS</label></div>
         </div>
+
+        <div class="keybed" id="piano-keys"></div>
     </div>
-    
-    <script src="engine.js"></script>
+
+    <script>
+        // Self-Contained Web Audio Engine
+        console.log("Victory Diagnostic Engine: Booting...");
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const voices = new Map();
+        
+        // Wake up audio context on interaction
+        window.addEventListener('mousedown', () => {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+                console.log("Audio Context: ONLINE");
+            }
+        });
+
+        // Activate the Gold Pulse LED
+        const led = document.getElementById('tremolo-led');
+        setInterval(() => { if(led) led.classList.toggle('active'); }, 125);
+
+        // Core Signal Generation
+        function playNote(frequency) {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            
+            // The 8-12 Second Decay
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 10);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            voices.set(frequency, { osc, gainNode });
+        }
+
+        function stopNote(frequency) {
+            const voice = voices.get(frequency);
+            if (voice) {
+                const now = audioCtx.currentTime;
+                voice.gainNode.gain.cancelScheduledValues(now);
+                voice.gainNode.gain.setValueAtTime(voice.gainNode.gain.value, now);
+                voice.gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                setTimeout(() => { voice.osc.stop(); voices.delete(frequency); }, 100);
+            }
+        }
+
+        // Render Physical Keys
+        const keybed = document.getElementById('piano-keys');
+        const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        
+        for (let i = 0; i < 24; i++) {
+            const isSharp = notes[i % 12].includes('#');
+            const key = document.createElement('div');
+            key.className = isSharp ? 'black-key' : 'white-key';
+            const freq = 261.63 * Math.pow(2, i / 12); // Middle C reference
+            
+            key.addEventListener('mousedown', () => { playNote(freq); key.classList.add('active'); });
+            key.addEventListener('mouseup', () => { stopNote(freq); key.classList.remove('active'); });
+            key.addEventListener('mouseleave', () => { stopNote(freq); key.classList.remove('active'); });
+            
+            keybed.appendChild(key);
+        }
+        console.log("Victory Diagnostic Engine: Ready");
+    </script>
 </body>
 </html>
