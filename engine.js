@@ -1,3 +1,9 @@
+// Enable audio on first interaction
+window.addEventListener('mousedown', () => {
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+});
 // Victory "Wake Up" Logic
 window.addEventListener('mousedown', () => {
     if (audioCtx.state === 'suspended') {
