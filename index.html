@@ -1767,21 +1767,28 @@ buildKeybed();
 window.addEventListener('resize', buildKeybed);
 
 // ─── QWERTY ────────────────────────────────────────────────
+// Keyed by e.code (PHYSICAL key location), not e.key (the character).
+// e.key is layout- and OS-dependent and can return empty/"Dead"/
+// "Unidentified" for held keys during chords — silently dropping notes.
+// e.code is always the stable physical position. This is what every
+// reliable browser piano uses.
 const QWERTY_MAP = {
-    'a': 60, 'w': 61, 's': 62, 'e': 63, 'd': 64,
-    'f': 65, 't': 66, 'g': 67, 'y': 68, 'h': 69,
-    'u': 70, 'j': 71, 'k': 72, 'o': 73, 'l': 74,
-    'p': 75, ';': 76,
+    'KeyA': 60, 'KeyW': 61, 'KeyS': 62, 'KeyE': 63, 'KeyD': 64,
+    'KeyF': 65, 'KeyT': 66, 'KeyG': 67, 'KeyY': 68, 'KeyH': 69,
+    'KeyU': 70, 'KeyJ': 71, 'KeyK': 72, 'KeyO': 73, 'KeyL': 74,
+    'KeyP': 75, 'Semicolon': 76,
 };
-// Maps a held QWERTY letter → the noteId it triggered (so keyup
-// releases the exact voice even if the octave changed meanwhile).
+// Maps a held physical key code → the noteId it triggered.
 const heldKeys = new Map();
 
 window.addEventListener('keydown', (e) => {
     if (e.repeat) return;
-    const k = e.key.toLowerCase();
+    const code = e.code;          // physical key — stable, layout-independent
 
-    if (k === ' ') {
+    // DIAGNOSTIC: log raw event identity before any guard.
+    diagLog('  · raw keydown: key="' + e.key + '" code="' + code + '"');
+
+    if (code === 'Space') {
         e.preventDefault();
         if (!state.sustain) {
             state.sustain = true;
@@ -1789,32 +1796,38 @@ window.addEventListener('keydown', (e) => {
         }
         return;
     }
-    if (k === 'z') {
+    if (code === 'KeyZ') {
         state.octave = Math.max(-2, state.octave - 1);
         document.getElementById('octave-display').textContent = state.octave > 0 ? '+' + state.octave : state.octave;
         return;
     }
-    if (k === 'x') {
+    if (code === 'KeyX') {
         state.octave = Math.min(2, state.octave + 1);
         document.getElementById('octave-display').textContent = state.octave > 0 ? '+' + state.octave : state.octave;
         return;
     }
 
-    if (QWERTY_MAP[k] !== undefined && !heldKeys.has(k)) {
-        const playedMidi = QWERTY_MAP[k] + state.octave * 12;
+    if (QWERTY_MAP[code] !== undefined && !heldKeys.has(code)) {
+        e.preventDefault();                       // stop browser shortcuts/quick-find
+        const baseMidi = QWERTY_MAP[code];
+        const playedMidi = baseMidi + state.octave * 12;
         const freq = midiToFreq(playedMidi);
-        const noteId = 'kbd:' + k;          // one voice per physical letter
-        heldKeys.set(k, { noteId, baseMidi: QWERTY_MAP[k] });
-        diagLog('kbd ↓ "' + k + '" → ' + noteId + '  voices=' + (voices.size + 1));
+        const noteId = 'kbd:' + code;             // one voice per physical key
+        heldKeys.set(code, { noteId, baseMidi });
         noteOn(noteId, freq, 0.85);
-        const el = keyEls.get(QWERTY_MAP[k] + state.octave * 12);
+        diagLog('kbd ↓ "' + code + '"  | voices now: ' + voices.size +
+                ' [' + [...voices.keys()].join(' ') + ']' +
+                ' | held: [' + [...heldKeys.keys()].join(' ') + ']');
+        const el = keyEls.get(playedMidi);
         if (el) el.classList.add('active');
+    } else if (QWERTY_MAP[code] !== undefined && heldKeys.has(code)) {
+        diagLog('  ⚠ DUPLICATE keydown "' + code + '" with no keyup — OS repeat artifact');
     }
 });
 
 window.addEventListener('keyup', (e) => {
-    const k = e.key.toLowerCase();
-    if (k === ' ') {
+    const code = e.code;
+    if (code === 'Space') {
         state.sustain = false;
         document.getElementById('sustain-dot').classList.remove('on');
         sustained.forEach(id => {
@@ -1828,16 +1841,35 @@ window.addEventListener('keyup', (e) => {
         updateVoiceDisplay();
         return;
     }
-    if (QWERTY_MAP[k] !== undefined && heldKeys.has(k)) {
-        const held = heldKeys.get(k);
-        heldKeys.delete(k);
+    if (QWERTY_MAP[code] !== undefined && heldKeys.has(code)) {
+        const held = heldKeys.get(code);
+        heldKeys.delete(code);
         noteOff(held.noteId);
-        // Clear any lit on-screen key for this letter (any octave)
+        diagLog('kbd ↑ "' + code + '"  | voices now: ' + voices.size +
+                ' [' + [...voices.keys()].join(' ') + ']' +
+                ' | held: [' + [...heldKeys.keys()].join(' ') + ']');
         for (let oct = -2; oct <= 2; oct++) {
             const el = keyEls.get(held.baseMidi + oct * 12);
             if (el) el.classList.remove('active');
         }
+    } else if (QWERTY_MAP[code] !== undefined) {
+        diagLog('  ⚠ ORPHAN keyup "' + code + '" — not in held set');
     }
+});
+
+// Window losing focus → release everything, so a missed keyup can't
+// leave a note stuck on. Standard safety net for browser keyboards.
+window.addEventListener('blur', () => {
+    if (heldKeys.size === 0) return;
+    diagLog('  · window blur — releasing ' + heldKeys.size + ' held key(s)');
+    heldKeys.forEach((held) => {
+        noteOff(held.noteId);
+        for (let oct = -2; oct <= 2; oct++) {
+            const el = keyEls.get(held.baseMidi + oct * 12);
+            if (el) el.classList.remove('active');
+        }
+    });
+    heldKeys.clear();
 });
 
 // ─── KNOBS ─────────────────────────────────────────────────
