@@ -898,11 +898,14 @@ const barkPreGain = audioCtx.createGain();
 barkPreGain.gain.value = 1;
 const barkSaturator = audioCtx.createWaveShaper();
 function makeBarkCurve(drive) {
+    // Gentle asymmetric soft-clip. 'k' tops out far lower than before so
+    // even full Bark is warm tube-style saturation, not a harsh clipper.
     const n = 2048, curve = new Float32Array(n);
-    const k = drive * 50;
+    const k = drive * 8;   // was drive*50 — that steep a curve added harsh fizz
     for (let i = 0; i < n; i++) {
         const x = (i * 2) / n - 1;
-        curve[i] = (1 + k) * x / (1 + k * Math.abs(x));
+        // tanh-shaped soft clip, scaled so output stays within ±1
+        curve[i] = Math.tanh((1 + k) * x) / Math.tanh(1 + k);
     }
     return curve;
 }
@@ -1013,7 +1016,7 @@ benderSum.connect(stereoPanner);
 
 // ── Master gain (internal staging — fixed) ──
 const masterGain = audioCtx.createGain();
-masterGain.gain.value = 0.9;
+masterGain.gain.value = 0.6;   // headroom into the compressor — limiter stays mostly idle
 stereoPanner.connect(masterGain);
 
 // ── USER COMPRESSOR — the musical one, driven by the Compressor knob ──
@@ -1086,16 +1089,32 @@ function createVoice(freq, velocity) {
     tineCarrier.type = 'sine';
     tineMod.type = 'sine';
     tineCarrier.frequency.value = freq;
-    tineMod.frequency.value = freq * 14;
 
-    // DEPTH = hammer depth → attack character
+    // ── FM TINE ──
+    // Modulator at a 3:1 ratio of the carrier gives a clean bell/tine timbre.
+    // (The old 14:1 ratio pushed sidebands past Nyquist → aliasing → harsh
+    //  "distortion" audible on headphones even on a single note.)
+    const MOD_RATIO = 3;
+    const modFreq = freq * MOD_RATIO;
+    tineMod.frequency.value = modFreq;
+
+    // DEPTH = hammer depth → FM modulation INDEX (not raw Hz deviation).
+    // Deviation sent to carrier.frequency = index × modulatorFreq.
+    // Musical index range ~0.8 (soft, mellow) to ~4.5 (hard, barky).
+    // This is ~15–20× lower than the previous build, which is what
+    // eliminates the aliasing. A real DX-style EP patch lives in this range.
     const hammerStrength = state.depth;
-    const baseModIndex = freq * (1.5 + hammerStrength * 9);
-    const peakModIndex = baseModIndex * (0.4 + velocity * 1.2);
+    // Real tines have less harmonic content up high — and high notes are
+    // where FM sidebands would alias. Scale the index down with pitch:
+    // full index in the bass, ~40% of it by the top of the keyboard.
+    const pitchScale = Math.max(0.4, 1 - (freq - 130) / 1800);
+    const peakIndex = (0.8 + hammerStrength * 3.0) * (0.5 + velocity * 0.7) * pitchScale;
+    const peakDeviation = peakIndex * modFreq;          // Hz
+    const sustainDeviation = Math.max(0.5, peakDeviation * 0.06);
     const attackTime = 0.001 + (1 - hammerStrength) * 0.012;
 
-    tineModGain.gain.setValueAtTime(peakModIndex, t);
-    tineModGain.gain.exponentialRampToValueAtTime(Math.max(0.01, peakModIndex * 0.03), t + 0.5);
+    tineModGain.gain.setValueAtTime(peakDeviation, t);
+    tineModGain.gain.exponentialRampToValueAtTime(sustainDeviation, t + 0.5);
 
     tineMod.connect(tineModGain);
     tineModGain.connect(tineCarrier.frequency);
@@ -1131,6 +1150,7 @@ function createVoice(freq, velocity) {
         tineCarrier, tineMod, tineModGain, tineAmp,
         bodyOsc, bodyAmp,
         voiceGain, voiceFilter,
+        modRatio: MOD_RATIO,
         startTime: t,
         released: false,
     };
@@ -1710,7 +1730,7 @@ function handlePitchBend(lsb, msb) {
             const now = audioCtx.currentTime;
             v.tineCarrier.frequency.setTargetAtTime(baseFreq * ratio, now, 0.02);
             v.bodyOsc.frequency.setTargetAtTime(baseFreq * ratio, now, 0.02);
-            v.tineMod.frequency.setTargetAtTime(baseFreq * 14 * ratio, now, 0.02);
+            v.tineMod.frequency.setTargetAtTime(baseFreq * v.modRatio * ratio, now, 0.02);
         }
     });
 }
