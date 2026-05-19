@@ -315,7 +315,11 @@
             cursor: crosshair;
         }
 
-        .control-cell.learn-target .knob-wrap::after {
+        /* The learn ring — rendered whenever a knob is a learn target
+           OR individually armed (e.g. via right-click). Both states need
+           content + positioning or the ::after pseudo-element won't draw. */
+        .control-cell.learn-target .knob-wrap::after,
+        .control-cell.learn-armed .knob-wrap::after {
             content: '';
             position: absolute;
             inset: -6px;
@@ -325,11 +329,15 @@
             pointer-events: none;
         }
 
+        /* Armed knob — solid bright ring, no pulse, stands out clearly */
         .control-cell.learn-armed .knob-wrap::after {
             border-style: solid;
             border-width: 2px;
+            border-color: var(--victory-gold-bright);
             animation: none;
-            box-shadow: 0 0 14px rgba(212,175,55,0.6);
+            box-shadow:
+                0 0 18px rgba(212,175,55,0.7),
+                inset 0 0 8px rgba(212,175,55,0.3);
         }
 
         @keyframes learn-pulse {
@@ -665,6 +673,144 @@
             letter-spacing: 2px;
         }
 
+        /* ───── GLOSSARY / MANUAL ───── */
+        .glossary {
+            width: 1080px;
+            max-width: 100%;
+            margin-top: 28px;
+        }
+
+        .glossary-toggle {
+            width: 100%;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--victory-gold);
+            background: linear-gradient(180deg, #15110e 0%, #0a0807 100%);
+            border: 1px solid #000;
+            border-radius: 10px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,220,160,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .glossary-toggle:hover { color: var(--victory-gold-bright); }
+
+        .glossary-toggle .chevron {
+            transition: transform 0.25s;
+            font-size: 9px;
+        }
+
+        .glossary.open .glossary-toggle .chevron { transform: rotate(180deg); }
+
+        .glossary-body {
+            display: none;
+            background: linear-gradient(180deg, #15110e 0%, #0a0807 100%);
+            border: 1px solid #000;
+            border-radius: 10px;
+            margin-top: 10px;
+            padding: 28px 32px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+        }
+
+        .glossary.open .glossary-body { display: block; }
+
+        .glossary-intro {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            font-style: italic;
+            color: var(--text-bright);
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .glossary-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            text-align: center;
+            margin-bottom: 24px;
+            line-height: 1.7;
+        }
+
+        .glossary-section-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--victory-gold-dim);
+            border-bottom: 1px solid rgba(212,175,55,0.15);
+            padding-bottom: 6px;
+            margin: 26px 0 16px;
+        }
+
+        .glossary-entry {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            gap: 18px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .glossary-entry:last-child { border-bottom: none; }
+
+        .glossary-term {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--victory-gold);
+        }
+
+        .glossary-term .term-sub {
+            display: block;
+            font-size: 8px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-top: 3px;
+            text-transform: none;
+        }
+
+        .glossary-def {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            line-height: 1.65;
+            color: #b8ab97;
+        }
+
+        .glossary-def strong {
+            color: var(--text-bright);
+            font-weight: 600;
+        }
+
+        .glossary-def .tip {
+            display: block;
+            margin-top: 6px;
+            color: var(--victory-gold-dim);
+            font-size: 10.5px;
+        }
+
+        .range-pill {
+            display: inline-block;
+            font-size: 9px;
+            letter-spacing: 0.5px;
+            color: var(--victory-gold);
+            background: rgba(212,175,55,0.1);
+            border: 1px solid rgba(212,175,55,0.25);
+            border-radius: 3px;
+            padding: 1px 6px;
+            margin: 0 2px;
+        }
+
         @media (max-width: 1120px) {
             .chassis { padding: 20px; }
             .control-panel { grid-template-columns: repeat(3, 1fr); }
@@ -675,6 +821,8 @@
             .control-panel { grid-template-columns: repeat(2, 1fr); }
             .title-main { font-size: 44px; }
             .title-overline { font-size: 10px; letter-spacing: 4px; }
+            .glossary-entry { grid-template-columns: 1fr; gap: 6px; }
+            .glossary-body { padding: 20px 18px; }
         }
     </style>
 </head>
@@ -869,6 +1017,165 @@
         <div class="footer-info">
             <div>MIDI controller or <kbd>A S D F G H J K</kbd> &middot; sharps <kbd>W E T Y U</kbd> &middot; right-click a knob to MIDI-map it</div>
             <div class="badge">Victory Musical Instruments</div>
+        </div>
+    </div>
+
+    <!-- ═══ GLOSSARY / MANUAL ═══ -->
+    <div class="glossary" id="glossary">
+        <button class="glossary-toggle" id="glossary-toggle">
+            <span>Manual &amp; Glossary</span>
+            <span class="chevron">&#9660;</span>
+        </button>
+        <div class="glossary-body">
+            <div class="glossary-intro">The Bender Roads</div>
+            <div class="glossary-sub">
+                A tine electric piano voiced by Victory Musical Instruments.<br>
+                Six voice controls shape the sound; the Output section sets level and dynamics.
+            </div>
+
+            <div class="glossary-section-title">The Voice — How It Sounds</div>
+
+            <div class="glossary-entry">
+                <div class="glossary-term">Bark
+                    <span class="term-sub">Silk &rarr; Steel</span>
+                </div>
+                <div class="glossary-def">
+                    Drive and bite. Bark controls how hard the instrument breaks up when you play.
+                    Toward <strong>Silk</strong> the tone stays clean, round and mellow &mdash; soft
+                    notes especially. Toward <strong>Steel</strong> harder playing pushes a warm
+                    saturation and lifts a <strong>3&nbsp;kHz "bite" band</strong>, the frequency
+                    where a real tine piano growls. Bark responds to your touch: play softly and
+                    even a high setting stays smooth; dig in and it barks.
+                    <span class="tip">Tip: set Bark around 30&ndash;45% for classic studio Rhodes; push past 70% for funk and rock comping.</span>
+                </div>
+            </div>
+
+            <div class="glossary-entry">
+                <div class="glossary-term">Bender
+                    <span class="term-sub">The signature control</span>
+                </div>
+                <div class="glossary-def">
+                    A slow, swirling phase modulation applied <strong>only to the upper
+                    harmonics</strong>. The fundamental pitch and the low end stay completely
+                    solid &mdash; Bender never makes the instrument sound out of tune. Instead it
+                    adds shimmer and motion to the top of the sound, like light moving across
+                    metal. This is what gives the Bender Roads its name and its edge.
+                    <span class="tip">Tip: at 0% it's off. Around 40&ndash;70%, hold a chord and listen &mdash; the bass stays planted while the top swirls. That contrast is the signature.</span>
+                </div>
+            </div>
+
+            <div class="glossary-entry">
+                <div class="glossary-term">Depth
+                    <span class="term-sub">Soft &rarr; Hard</span>
+                </div>
+                <div class="glossary-def">
+                    Hammer depth &mdash; how the instrument is "set up," like a tech adjusting the
+                    action. Toward <strong>Soft</strong> the hammer brushes the tine: a gentle,
+                    bell-like attack. Toward <strong>Hard</strong> it strikes with force: a
+                    percussive, barky attack with more harmonic content. Where Bark reacts to
+                    <em>how you play</em>, Depth sets <em>how the instrument itself behaves</em>
+                    before you touch a key.
+                    <span class="tip">Tip: Soft for ballads and pads, Hard for cutting through a mix. Takes effect on the next note played.</span>
+                </div>
+            </div>
+
+            <div class="glossary-entry">
+                <div class="glossary-term">Pulse + Speed
+                    <span class="term-sub">Stereo tremolo</span>
+                </div>
+                <div class="glossary-def">
+                    The classic electric-piano stereo tremolo. <strong>Pulse</strong> isn't a knob
+                    &mdash; it's the indicator: a light that glows left and right, and a meter
+                    below it showing the sound panning across the stereo field in real time.
+                    <strong>Speed</strong> sets how fast it sweeps,
+                    <span class="range-pill">0.3&ndash;9 Hz</span>. Slow is a gentle drift; fast is
+                    a vintage shimmer.
+                    <span class="tip">Tip: best heard in headphones or stereo speakers. Around 4&ndash;6&nbsp;Hz is the classic setting.</span>
+                </div>
+            </div>
+
+            <div class="glossary-entry">
+                <div class="glossary-term">Mechanicals</div>
+                <div class="glossary-def">
+                    The physical noise of a real instrument &mdash; the soft mechanical "thunk" of
+                    the key returning when you release a note. Low settings are clean and
+                    synthetic; higher settings add the woody, hand-played realism of a tine piano
+                    under your fingers.
+                    <span class="tip">Tip: keep it around 50&ndash;75% for natural feel; turn down for a polished, modern tone.</span>
+                </div>
+            </div>
+
+            <div class="glossary-section-title">Output — Level &amp; Dynamics</div>
+
+            <div class="glossary-entry">
+                <div class="glossary-term">Compressor
+                    <span class="term-sub">Clean &rarr; Squeeze</span>
+                </div>
+                <div class="glossary-def">
+                    Evens out your dynamics and adds punch &mdash; the same job the compressor in a
+                    real Suitcase amp does. Toward <strong>Clean</strong> the instrument is
+                    untouched. Toward <strong>Squeeze</strong> loud notes are reined in and quiet
+                    notes lift, so chords sound fuller and more consistent. The instrument stays at
+                    an even volume as you turn it up &mdash; it gets <em>punchier</em>, not louder.
+                    <span class="tip">Tip: the Gain Reduction meter beside it shows the compressor working &mdash; the bar moves as it squeezes.</span>
+                </div>
+            </div>
+
+            <div class="glossary-entry">
+                <div class="glossary-term">Gain Reduction
+                    <span class="term-sub">Meter, not a control</span>
+                </div>
+                <div class="glossary-def">
+                    A live readout, not a knob. The bar lights up to show how hard the Compressor
+                    is working at any moment, in decibels. No movement means the compressor is
+                    resting; more movement means it's actively shaping your playing.
+                </div>
+            </div>
+
+            <div class="glossary-entry">
+                <div class="glossary-term">Master Volume</div>
+                <div class="glossary-def">
+                    The final output level of the instrument, shown in decibels. This is the last
+                    stage before sound leaves the Bender Roads &mdash; set it to taste for your
+                    headphones, speakers, or recording.
+                    <span class="tip">A protective limiter sits after this control at all times, so the instrument can't clip or distort no matter how hard you play.</span>
+                </div>
+            </div>
+
+            <div class="glossary-section-title">Playing &amp; MIDI</div>
+
+            <div class="glossary-entry">
+                <div class="glossary-term">How to Play</div>
+                <div class="glossary-def">
+                    Play with a connected <strong>MIDI controller</strong> (full keyboard range,
+                    velocity-sensitive), with your <strong>computer keyboard</strong>
+                    (<kbd>A S D F G H J K</kbd> for white keys, <kbd>W E T Y U</kbd> for sharps),
+                    or by clicking the on-screen keys. <kbd>Z</kbd> and <kbd>X</kbd> shift octaves;
+                    <kbd>SPACE</kbd> is the sustain pedal.
+                </div>
+            </div>
+
+            <div class="glossary-entry">
+                <div class="glossary-term">MIDI Learn</div>
+                <div class="glossary-def">
+                    Map any knob to a physical control on your MIDI controller.
+                    <strong>Right-click a knob</strong>, then move a knob or fader on your
+                    controller to bind it &mdash; or press the <strong>MIDI Learn</strong> button,
+                    click a knob, and move a control. A small <span class="range-pill">CC##</span>
+                    tag shows what's mapped. The sustain pedal works automatically.
+                    <span class="tip">Note: MIDI requires Chrome, Edge, or Opera on a secure (https) page.</span>
+                </div>
+            </div>
+
+            <div class="glossary-entry">
+                <div class="glossary-term">Save / Load Preset</div>
+                <div class="glossary-def">
+                    <strong>Save Preset</strong> downloads a file with every knob position and your
+                    MIDI mappings. <strong>Load Preset</strong> restores them. Build a sound you
+                    like, save it, and recall it any time &mdash; or share the file with another
+                    player.
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1206,40 +1513,50 @@ function releaseVoice(voice, immediate = false) {
     }, releaseTime * 1000 + 50);
 }
 
-function noteOn(freq, velocity = 0.85) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    if (voices.has(freq)) releaseVoice(voices.get(freq), true);
+/* ──────────────────────────────────────────────────────────
+   Voices are keyed by a STABLE note ID (e.g. "midi:60", "kbd:64"),
+   never by frequency. Two different notes can resolve to nearly
+   equal floats; keying by frequency caused a new note to evict an
+   existing one (the C-major triad bug). Note IDs never collide.
+   ────────────────────────────────────────────────────────── */
 
-    // Voice-stealing: if at the polyphony cap, release the oldest voice first.
+function noteOn(noteId, freq, velocity = 0.85) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    // Same note re-triggered → release the old instance first
+    if (voices.has(noteId)) releaseVoice(voices.get(noteId), true);
+
+    // Voice-stealing: at the polyphony cap, release the oldest voice
     if (voices.size >= MAX_VOICES) {
-        let oldestFreq = null;
+        let oldestId = null;
         let oldestTime = Infinity;
-        voices.forEach((v, f) => {
+        voices.forEach((v, id) => {
             if (v.startTime < oldestTime) {
                 oldestTime = v.startTime;
-                oldestFreq = f;
+                oldestId = id;
             }
         });
-        if (oldestFreq !== null) {
-            releaseVoice(voices.get(oldestFreq), true);
-            voices.delete(oldestFreq);
-            sustained.delete(oldestFreq);
+        if (oldestId !== null) {
+            releaseVoice(voices.get(oldestId), true);
+            voices.delete(oldestId);
+            sustained.delete(oldestId);
         }
     }
 
     const v = createVoice(freq, velocity);
-    voices.set(freq, v);
+    v.noteId = noteId;
+    voices.set(noteId, v);
     updateVoiceDisplay();
 }
 
-function noteOff(freq) {
-    const v = voices.get(freq);
+function noteOff(noteId) {
+    const v = voices.get(noteId);
     if (!v) return;
     if (state.sustain) {
-        sustained.add(freq);
+        sustained.add(noteId);
     } else {
         releaseVoice(v);
-        voices.delete(freq);
+        voices.delete(noteId);
         updateVoiceDisplay();
     }
 }
@@ -1318,17 +1635,21 @@ function attachKeyHandlers(el, midi) {
         if (pressed) return;
         pressed = true;
         const velocity = 0.75 + Math.random() * 0.2;
-        const freq = midiToFreq(midi + state.octave * 12);
+        // Octave shift can change which note this key plays, so the
+        // note ID includes the resolved MIDI number.
+        const playedMidi = midi + state.octave * 12;
+        const freq = midiToFreq(playedMidi);
+        const noteId = 'screen:' + playedMidi;
         el.classList.add('active');
-        el.dataset.playingFreq = freq;
-        noteOn(freq, velocity);
+        el.dataset.noteId = noteId;
+        noteOn(noteId, freq, velocity);
     };
     const release = () => {
         if (!pressed) return;
         pressed = false;
         el.classList.remove('active');
-        const freq = parseFloat(el.dataset.playingFreq);
-        if (freq) noteOff(freq);
+        const noteId = el.dataset.noteId;
+        if (noteId) noteOff(noteId);
     };
 
     el.addEventListener('mousedown', press);
@@ -1348,7 +1669,9 @@ const QWERTY_MAP = {
     'u': 70, 'j': 71, 'k': 72, 'o': 73, 'l': 74,
     'p': 75, ';': 76,
 };
-const heldKeys = new Set();
+// Maps a held QWERTY letter → the noteId it triggered (so keyup
+// releases the exact voice even if the octave changed meanwhile).
+const heldKeys = new Map();
 
 window.addEventListener('keydown', (e) => {
     if (e.repeat) return;
@@ -1374,11 +1697,12 @@ window.addEventListener('keydown', (e) => {
     }
 
     if (QWERTY_MAP[k] !== undefined && !heldKeys.has(k)) {
-        heldKeys.add(k);
-        const midi = QWERTY_MAP[k];
-        const freq = midiToFreq(midi + state.octave * 12);
-        noteOn(freq, 0.85);
-        const el = keyEls.get(midi);
+        const playedMidi = QWERTY_MAP[k] + state.octave * 12;
+        const freq = midiToFreq(playedMidi);
+        const noteId = 'kbd:' + k;          // one voice per physical letter
+        heldKeys.set(k, { noteId, baseMidi: QWERTY_MAP[k] });
+        noteOn(noteId, freq, 0.85);
+        const el = keyEls.get(QWERTY_MAP[k] + state.octave * 12);
         if (el) el.classList.add('active');
     }
 });
@@ -1388,11 +1712,11 @@ window.addEventListener('keyup', (e) => {
     if (k === ' ') {
         state.sustain = false;
         document.getElementById('sustain-dot').classList.remove('on');
-        sustained.forEach(freq => {
-            const v = voices.get(freq);
+        sustained.forEach(id => {
+            const v = voices.get(id);
             if (v) {
                 releaseVoice(v);
-                voices.delete(freq);
+                voices.delete(id);
             }
         });
         sustained.clear();
@@ -1400,12 +1724,14 @@ window.addEventListener('keyup', (e) => {
         return;
     }
     if (QWERTY_MAP[k] !== undefined && heldKeys.has(k)) {
+        const held = heldKeys.get(k);
         heldKeys.delete(k);
-        const midi = QWERTY_MAP[k];
-        const freq = midiToFreq(midi + state.octave * 12);
-        noteOff(freq);
-        const el = keyEls.get(midi);
-        if (el) el.classList.remove('active');
+        noteOff(held.noteId);
+        // Clear any lit on-screen key for this letter (any octave)
+        for (let oct = -2; oct <= 2; oct++) {
+            const el = keyEls.get(held.baseMidi + oct * 12);
+            if (el) el.classList.remove('active');
+        }
     }
 });
 
@@ -1509,10 +1835,15 @@ function setupKnob(el) {
     }, { passive: false });
     knob.addEventListener('touchend', () => { dragging = false; });
 
-    // Right-click to arm this knob for MIDI Learn
+    // Right-click to arm/disarm this knob for MIDI Learn
     el.addEventListener('contextmenu', (e) => {
         e.preventDefault();
-        armKnobForLearn(param);
+        // Right-clicking the already-armed knob cancels it
+        if (armedParam === param) {
+            disarmLearn();
+        } else {
+            armKnobForLearn(param);
+        }
     });
 
     // Register so MIDI / presets can drive it
@@ -1702,17 +2033,18 @@ function handleMIDIMessage(msg) {
 function midiNoteOn(midiNote, velocity) {
     const vel = velocity / 127;            // real velocity, 0..1
     const freq = midiToFreq(midiNote) * Math.pow(2, midiPitchBend / 12);
-    midiNotesOn.set(midiNote, freq);
-    noteOn(freq, vel);
+    const noteId = 'midi:' + midiNote;
+    midiNotesOn.set(midiNote, noteId);
+    noteOn(noteId, freq, vel);
     const el = keyEls.get(midiNote);       // visible range = MIDI 48..95
     if (el) el.classList.add('active');
 }
 
 function midiNoteOff(midiNote) {
-    const freq = midiNotesOn.get(midiNote);
-    if (freq === undefined) return;
+    const noteId = midiNotesOn.get(midiNote);
+    if (noteId === undefined) return;
     midiNotesOn.delete(midiNote);
-    noteOff(freq);
+    noteOff(noteId);
     const el = keyEls.get(midiNote);
     if (el) el.classList.remove('active');
 }
@@ -1723,9 +2055,9 @@ function handlePitchBend(lsb, msb) {
     midiPitchBend = ((raw - 8192) / 8192) * 2;   // ±2 semitones
     const ratio = Math.pow(2, midiPitchBend / 12);
     // Retune currently sounding MIDI voices
-    midiNotesOn.forEach((oldFreq, midiNote) => {
+    midiNotesOn.forEach((noteId, midiNote) => {
         const baseFreq = midiToFreq(midiNote);
-        const v = voices.get(oldFreq);
+        const v = voices.get(noteId);
         if (v) {
             const now = audioCtx.currentTime;
             v.tineCarrier.frequency.setTargetAtTime(baseFreq * ratio, now, 0.02);
@@ -1745,9 +2077,9 @@ function handleCC(cc, val) {
         } else {
             state.sustain = false;
             document.getElementById('sustain-dot').classList.remove('on');
-            sustained.forEach(freq => {
-                const v = voices.get(freq);
-                if (v) { releaseVoice(v); voices.delete(freq); }
+            sustained.forEach(id => {
+                const v = voices.get(id);
+                if (v) { releaseVoice(v); voices.delete(id); }
             });
             sustained.clear();
             updateVoiceDisplay();
@@ -1787,15 +2119,35 @@ function bindCC(cc, param) {
     if (knobRegistry[param]) knobRegistry[param].setCCBadge(cc);
 }
 
+let learnTimeout = null;
+
 function armKnobForLearn(param) {
-    // Clear any other armed knob
+    // Clear any other armed knob and pending timeout
     Object.values(knobRegistry).forEach(k => k.el.classList.remove('learn-armed'));
+    if (learnTimeout) { clearTimeout(learnTimeout); learnTimeout = null; }
+
     armedParam = param;
     if (knobRegistry[param]) knobRegistry[param].el.classList.add('learn-armed');
-    midiStatusText.textContent = 'MIDI Learn: move a knob/fader to bind \u2192 ' + param.toUpperCase();
+
+    // Tell the player what to do — and warn if there's no MIDI to bind to
+    const midiConnected = midiDot.classList.contains('connected');
+    if (!midiConnected) {
+        midiStatusText.textContent =
+            'MIDI Learn armed (' + param.toUpperCase() + ') — but no controller detected. Connect one, then move a knob.';
+    } else {
+        midiStatusText.textContent =
+            'MIDI Learn: move a knob/fader on your controller to bind \u2192 ' + param.toUpperCase()
+            + '   (Esc or right-click again to cancel)';
+    }
+
+    // Auto-cancel after 15s so a stray right-click doesn't stay armed forever
+    learnTimeout = setTimeout(() => {
+        if (armedParam === param) disarmLearn();
+    }, 15000);
 }
 
 function disarmLearn() {
+    if (learnTimeout) { clearTimeout(learnTimeout); learnTimeout = null; }
     if (armedParam && knobRegistry[armedParam]) {
         knobRegistry[armedParam].el.classList.remove('learn-armed');
     }
@@ -1853,9 +2205,14 @@ function exitLearnMode() {
         : 'MIDI: no device — connect a controller';
 }
 
-// Esc exits learn mode
+// Esc cancels learn — either global LEARN mode or a single armed knob
 window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && learnMode) exitLearnMode();
+    if (e.key !== 'Escape') return;
+    if (learnMode) {
+        exitLearnMode();
+    } else if (armedParam) {
+        disarmLearn();
+    }
 });
 
 // ════════════════════════════════════════════════════════════
@@ -1939,6 +2296,15 @@ const resumeAudio = () => {
 window.addEventListener('mousedown', resumeAudio, { once: true });
 window.addEventListener('keydown', resumeAudio, { once: true });
 window.addEventListener('touchstart', resumeAudio, { once: true });
+
+// ─── GLOSSARY TOGGLE ───────────────────────────────────────
+const glossaryEl = document.getElementById('glossary');
+document.getElementById('glossary-toggle').addEventListener('click', () => {
+    glossaryEl.classList.toggle('open');
+    if (glossaryEl.classList.contains('open')) {
+        glossaryEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+});
 
 console.log('%cTHE BENDER ROADS', 'color:#d4af37;font-size:18px;font-weight:bold;letter-spacing:4px;font-style:italic;');
 console.log('Tine electric piano engine online.');
