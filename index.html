@@ -811,6 +811,66 @@
             margin: 0 2px;
         }
 
+        /* ───── DIAGNOSTIC PANEL ───── */
+        .diag-panel {
+            width: 1080px;
+            max-width: 100%;
+            margin-top: 20px;
+            background: #0a0807;
+            border: 1px solid #3a2a1a;
+            border-radius: 10px;
+            padding: 14px 18px 16px;
+        }
+
+        .diag-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--victory-gold-dim);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .diag-clear {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 1px;
+            color: var(--text-bright);
+            background: #15110e;
+            border: 1px solid #2a2420;
+            border-radius: 4px;
+            padding: 4px 10px;
+            cursor: pointer;
+        }
+        .diag-clear:hover { color: var(--victory-gold); }
+
+        .diag-log {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            line-height: 1.6;
+            color: #9adb8a;
+            background: #050302;
+            border: 1px solid #1a1410;
+            border-radius: 5px;
+            padding: 10px 12px;
+            height: 180px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .diag-log .warn { color: #ff6644; }
+
+        .diag-hint {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            line-height: 1.6;
+            color: var(--text-dim);
+            margin-top: 10px;
+        }
+
         @media (max-width: 1120px) {
             .chassis { padding: 20px; }
             .control-panel { grid-template-columns: repeat(3, 1fr); }
@@ -1179,6 +1239,20 @@
         </div>
     </div>
 
+    <!-- ═══ DIAGNOSTIC PANEL (temporary — for chord troubleshooting) ═══ -->
+    <div class="diag-panel" id="diag-panel">
+        <div class="diag-header">
+            <span>NOTE EVENT LOG &mdash; play C, E, G and watch</span>
+            <button class="diag-clear" id="diag-clear">CLEAR</button>
+        </div>
+        <div class="diag-log" id="diag-log"></div>
+        <div class="diag-hint">
+            Each note you play should add a <strong>↓</strong> line. Three notes = three ↓ lines.
+            A <span style="color:#ff6644">⚠ RE-TRIGGER</span> or <span style="color:#ff6644">⚠ VOICE STEAL</span>
+            line means the engine dropped a note &mdash; copy the log and send it back.
+        </div>
+    </div>
+
 <script>
 /* ════════════════════════════════════════════════════════════
    THE BENDER ROADS — v2 ENGINE
@@ -1186,6 +1260,31 @@
          → Master → Compressor → Safety Limiter → Output
    Depth = Hammer Depth (per-voice, sets attack character)
    ════════════════════════════════════════════════════════════ */
+
+// ─── DIAGNOSTIC LOGGER ─────────────────────────────────────
+// Writes note events to the on-screen diagnostic panel + console.
+// Was previously called in 7 places but never defined, which threw
+// a ReferenceError on the first note and broke all playing.
+function diagLog(message) {
+    const isWarn = message.indexOf('\u26a0') !== -1;   // contains ⚠
+    try {
+        const logEl = document.getElementById('diag-log');
+        if (logEl) {
+            const line = document.createElement('div');
+            line.className = 'diag-line' + (isWarn ? ' warn' : '');
+            const t = new Date();
+            const stamp = t.toLocaleTimeString('en-US', { hour12: false }) +
+                          '.' + String(t.getMilliseconds()).padStart(3, '0');
+            line.textContent = stamp + '  ' + message;
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight;
+            // Keep the panel from growing unbounded
+            while (logEl.childNodes.length > 200) logEl.removeChild(logEl.firstChild);
+        }
+    } catch (e) { /* never let logging break audio */ }
+    if (isWarn) console.warn('[BenderRoads]', message);
+    else console.log('[BenderRoads]', message);
+}
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -1524,7 +1623,10 @@ function noteOn(noteId, freq, velocity = 0.85) {
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
     // Same note re-triggered → release the old instance first
-    if (voices.has(noteId)) releaseVoice(voices.get(noteId), true);
+    if (voices.has(noteId)) {
+        diagLog('  ⚠ RE-TRIGGER: ' + noteId + ' already playing — replacing');
+        releaseVoice(voices.get(noteId), true);
+    }
 
     // Voice-stealing: at the polyphony cap, release the oldest voice
     if (voices.size >= MAX_VOICES) {
@@ -1537,6 +1639,7 @@ function noteOn(noteId, freq, velocity = 0.85) {
             }
         });
         if (oldestId !== null) {
+            diagLog('  ⚠ VOICE STEAL: cap ' + MAX_VOICES + ' hit — releasing ' + oldestId);
             releaseVoice(voices.get(oldestId), true);
             voices.delete(oldestId);
             sustained.delete(oldestId);
@@ -1642,6 +1745,7 @@ function attachKeyHandlers(el, midi) {
         const noteId = 'screen:' + playedMidi;
         el.classList.add('active');
         el.dataset.noteId = noteId;
+        diagLog('screen ↓ ' + noteId + '  voices=' + (voices.size + 1));
         noteOn(noteId, freq, velocity);
     };
     const release = () => {
@@ -1649,7 +1753,7 @@ function attachKeyHandlers(el, midi) {
         pressed = false;
         el.classList.remove('active');
         const noteId = el.dataset.noteId;
-        if (noteId) noteOff(noteId);
+        if (noteId) { diagLog('screen ↑ ' + noteId); noteOff(noteId); }
     };
 
     el.addEventListener('mousedown', press);
@@ -1701,6 +1805,7 @@ window.addEventListener('keydown', (e) => {
         const freq = midiToFreq(playedMidi);
         const noteId = 'kbd:' + k;          // one voice per physical letter
         heldKeys.set(k, { noteId, baseMidi: QWERTY_MAP[k] });
+        diagLog('kbd ↓ "' + k + '" → ' + noteId + '  voices=' + (voices.size + 1));
         noteOn(noteId, freq, 0.85);
         const el = keyEls.get(QWERTY_MAP[k] + state.octave * 12);
         if (el) el.classList.add('active');
@@ -2035,6 +2140,7 @@ function midiNoteOn(midiNote, velocity) {
     const freq = midiToFreq(midiNote) * Math.pow(2, midiPitchBend / 12);
     const noteId = 'midi:' + midiNote;
     midiNotesOn.set(midiNote, noteId);
+    diagLog('MIDI ↓ note ' + midiNote + ' vel ' + velocity + '  voices=' + (voices.size + 1));
     noteOn(noteId, freq, vel);
     const el = keyEls.get(midiNote);       // visible range = MIDI 48..95
     if (el) el.classList.add('active');
@@ -2044,6 +2150,7 @@ function midiNoteOff(midiNote) {
     const noteId = midiNotesOn.get(midiNote);
     if (noteId === undefined) return;
     midiNotesOn.delete(midiNote);
+    diagLog('MIDI ↑ note ' + midiNote);
     noteOff(noteId);
     const el = keyEls.get(midiNote);
     if (el) el.classList.remove('active');
@@ -2305,6 +2412,16 @@ document.getElementById('glossary-toggle').addEventListener('click', () => {
         glossaryEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 });
+
+// ─── DIAGNOSTIC PANEL — CLEAR button ───────────────────────
+const diagClearBtn = document.getElementById('diag-clear');
+if (diagClearBtn) {
+    diagClearBtn.addEventListener('click', () => {
+        const logEl = document.getElementById('diag-log');
+        if (logEl) logEl.innerHTML = '';
+    });
+}
+diagLog('Engine ready. Play C, then E, then G — each should add a ↓ line.');
 
 console.log('%cTHE BENDER ROADS', 'color:#d4af37;font-size:18px;font-weight:bold;letter-spacing:4px;font-style:italic;');
 console.log('Tine electric piano engine online.');
